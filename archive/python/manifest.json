@@ -1,0 +1,331 @@
+{
+  "_usage": "写真集エディタ（app.py）が書き出したものです。手で編集しても構いません。",
+  "_rule": "ページ総数は必ず4の倍数（中綴じの制約）。",
+  "pages": [
+    {
+      "template": "cover",
+      "photos": [
+        "P1028119.JPG"
+      ]
+    },
+    {
+      "template": "blank",
+      "_note": "表紙の裏"
+    },
+    {
+      "template": "landscape-wide",
+      "photos": [
+        "P1028120.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028121.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028122.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-duo",
+      "photos": [
+        "P1028123.JPG",
+        "P1028124.JPG"
+      ],
+      "caption": "",
+      "caption2": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028125.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-wide",
+      "photos": [
+        "P1028126.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028127.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-duo",
+      "photos": [
+        "P1028128.JPG",
+        "P1028129.JPG"
+      ],
+      "caption": "",
+      "caption2": ""
+    },
+    {
+      "template": "landscape-wide",
+      "photos": [
+        "P1028130.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028131.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028132.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-duo",
+      "photos": [
+        "P1028133.JPG",
+        "P1028134.JPG"
+      ],
+      "caption": "",
+      "caption2": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028135.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-wide",
+      "photos": [
+        "P1028136.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028137.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-duo",
+      "photos": [
+        "P1028138.JPG",
+        "P1028139.JPG"
+      ],
+      "caption": "",
+      "caption2": ""
+    },
+    {
+      "template": "landscape-wide",
+      "photos": [
+        "P1028140.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028141.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028142.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-duo",
+      "photos": [
+        "P1028143.JPG",
+        "P1028144.JPG"
+      ],
+      "caption": "",
+      "caption2": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028145.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "portrait-fill",
+      "photos": [
+        "P1028146.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028147.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-duo",
+      "photos": [
+        "P1028148.JPG",
+        "P1028149.JPG"
+      ],
+      "caption": "",
+      "caption2": ""
+    },
+    {
+      "template": "landscape-wide",
+      "photos": [
+        "P1028150.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028151.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028152.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-duo",
+      "photos": [
+        "P1028153.JPG",
+        "P1028155.JPG"
+      ],
+      "caption": "",
+      "caption2": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028156.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-wide",
+      "photos": [
+        "P1028157.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028158.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-duo",
+      "photos": [
+        "P1028159.JPG",
+        "P1028160.JPG"
+      ],
+      "caption": "",
+      "caption2": ""
+    },
+    {
+      "template": "landscape-wide",
+      "photos": [
+        "P1028161.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028162.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "blank"
+    },
+    {
+      "template": "blank"
+    },
+    {
+      "template": "blank"
+    },
+    {
+      "template": "landscape-duo",
+      "photos": [
+        "P1028129.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028126.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-duo",
+      "photos": [
+        "P1028120.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028122.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028120.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028121.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "landscape-one",
+      "photos": [
+        "P1028120.JPG"
+      ],
+      "caption": ""
+    },
+    {
+      "template": "back-cover"
+    }
+  ]
+}

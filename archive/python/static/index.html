@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>写真集エディタ</title>
+<style>
+:root{
+  --bg:#f4f4f3; --panel:#fff; --line:#e0e0de; --ink:#22221f; --dim:#83837c;
+  --accent:#2f6f4e; --warn:#a8641b; --warnbg:#fdf4e6; --okbg:#eef5f0;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font:13px/1.6 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  background:var(--bg);color:var(--ink);overflow:hidden}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);
+  border-radius:6px;padding:5px 11px}
+button:hover:not(:disabled){background:#f0f0ee}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button.primary:hover:not(:disabled){background:#255a3f}
+select,input[type=text]{font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink)}
+.row{display:flex;align-items:center;gap:8px}
+
+header{display:flex;align-items:center;gap:14px;padding:10px 16px;background:var(--panel);
+  border-bottom:1px solid var(--line);flex-wrap:wrap}
+header h1{font-size:14px;margin:0 10px 0 0;font-weight:700;letter-spacing:.02em}
+.spacer{flex:1}
+#count{font-weight:600;padding:4px 12px;border-radius:20px;background:var(--okbg);white-space:nowrap}
+#count.bad{background:var(--warnbg);color:var(--warn)}
+#src{width:280px}
+
+main{display:grid;grid-template-columns:210px 1fr 290px;height:calc(100vh - 53px)}
+.pane{overflow-y:auto;padding:12px}
+.pane.right{padding-bottom:40px}
+.pane.left{border-right:1px solid var(--line);background:var(--panel)}
+.pane.right{border-left:1px solid var(--line);background:var(--panel)}
+h2{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--dim);
+  margin:0 0 10px;font-weight:700}
+h2:not(:first-child){margin-top:22px}
+
+.tray{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tray figure{margin:0;position:relative;cursor:pointer;border-radius:4px;overflow:hidden;
+  border:1px solid var(--line);aspect-ratio:1;background:#eee}
+.tray img{width:100%;height:100%;object-fit:cover;display:block}
+.tray figure:hover{outline:2px solid var(--accent);outline-offset:1px}
+.tray .o{position:absolute;left:3px;bottom:3px;background:rgba(0,0,0,.62);color:#fff;
+  font-size:9px;padding:1px 4px;border-radius:3px;letter-spacing:.04em}
+
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:7px;overflow:hidden;
+  cursor:pointer;position:relative}
+.card.sel{border-color:var(--accent);box-shadow:0 0 0 2px rgba(47,111,78,.22)}
+.card.drag{opacity:.35}
+.card.over{border-color:var(--accent);border-style:dashed}
+.card .ph{aspect-ratio:210/297;background:#fafaf9;display:block;width:100%;object-fit:contain}
+.card .meta{padding:4px 7px;border-top:1px solid var(--line);display:flex;
+  justify-content:space-between;gap:6px;font-size:10.5px;color:var(--dim)}
+.card .no{font-weight:700;color:var(--ink)}
+.card .tn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .rot{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.66);color:#fff;
+  border-radius:4px;font-size:10px;padding:1px 5px}
+.side{position:absolute;top:5px;left:5px;font-size:9px;color:#fff;background:rgba(0,0,0,.4);
+  padding:1px 4px;border-radius:3px}
+
+.field{margin-bottom:13px}
+.field label{display:block;font-size:11px;color:var(--dim);margin-bottom:4px;font-weight:600}
+.field select,.field input{width:100%}
+#insPrev{width:100%;max-height:300px;object-fit:contain;border:1px solid var(--line);border-radius:5px;display:block;background:#fafaf9}
+.slot{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.slot img{width:42px;height:42px;object-fit:cover;border-radius:4px;border:1px solid var(--line);background:#eee}
+.slot select{flex:1;min-width:0}
+.toggle{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);
+  border-radius:6px;background:#fafaf9;cursor:pointer}
+.toggle input{margin:0}
+.hint{font-size:11px;color:var(--dim);line-height:1.55;margin:7px 0 0}
+.empty{color:var(--dim);text-align:center;padding:50px 20px;line-height:1.8}
+
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;
+  justify-content:center;z-index:50}
+#modal.on{display:flex}
+.sheet{background:var(--panel);border-radius:10px;width:min(680px,92vw);max-height:86vh;
+  display:flex;flex-direction:column;overflow:hidden}
+.sheet header{border-bottom:1px solid var(--line)}
+.sheet .body{padding:16px;overflow-y:auto}
+pre{background:#22221f;color:#e8e8e2;padding:12px;border-radius:6px;font-size:11px;
+  max-height:230px;overflow:auto;white-space:pre-wrap;margin:0;line-height:1.5}
+.dl{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;
+  border:1px solid var(--line);border-radius:6px;margin-bottom:6px;gap:10px}
+.dl a{color:var(--accent);font-weight:600;text-decoration:none;white-space:nowrap}
+.dl a:hover{text-decoration:underline}
+.dl .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dl .s{color:var(--dim);font-size:11px;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>写真集エディタ</h1>
+  <input type="text" id="src" placeholder="~/Pictures/…">
+  <button onclick="setSrc()">読み込み</button>
+  <select id="mode">
+    <option value="simple">標準5種</option>
+    <option value="portrait">全ページ縦（横は回転）</option>
+    <option value="editorial">見開き入り</option>
+  </select>
+  <button onclick="autoPlan()">自動で台割を作る</button>
+  <span class="spacer"></span>
+  <span id="count">—</span>
+  <button id="padBtn" onclick="padBlanks()" style="display:none"></button>
+  <button class="primary" id="buildBtn" onclick="build()">PDFを作る</button>
+</header>
+
+<main>
+  <div class="pane left">
+    <h2>写真</h2>
+    <div id="tray" class="tray"></div>
+    <p class="hint">クリックすると最後にページを足します。</p>
+  </div>
+
+  <div class="pane" id="center">
+    <div id="grid"></div>
+    <div id="gridEmpty" class="empty" style="display:none">
+      写真フォルダを読み込んで<br>「自動で台割を作る」を押してください
+    </div>
+  </div>
+
+  <div class="pane right" id="ins">
+    <div class="empty">ページを選ぶと<br>ここで版面を変えられます</div>
+  </div>
+</main>
+
+<div id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="sheet">
+    <header><h1>PDFを作っています</h1><span class="spacer"></span>
+      <button onclick="closeModal()">閉じる</button></header>
+    <div class="body">
+      <div id="dls"></div>
+      <pre id="log"></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+let S={src:"",photos:[],pages:[],templates:[],rotate_pairs:{},rotate_direction:"ccw"};
+let sel=-1, ver=0, saveTimer=null, pollTimer=null;
+
+const $=s=>document.querySelector(s);
+const api=(p,o)=>fetch(p,o).then(r=>r.json());
+
+async function load(){
+  S=await api("/api/state");
+  $("#src").value=S.src;
+  renderAll();
+}
+
+function renderAll(){ renderTray(); renderGrid(); renderIns(); renderCount(); }
+
+/* ---------- ページ数と4の倍数 ---------- */
+function renderCount(){
+  const n=S.pages.length, r=n%4, need=r?4-r:0;
+  const el=$("#count"), pad=$("#padBtn");
+  if(n===0){ el.textContent="0ページ"; el.className="bad"; pad.style.display="none";
+             $("#buildBtn").disabled=true; return; }
+  if(need){
+    el.textContent=`${n}ページ ／ 4の倍数まであと${need}ページ`;
+    el.className="bad";
+    pad.textContent=`白ページを${need}枚足す`; pad.style.display="";
+    $("#buildBtn").disabled=true;
+  }else{
+    el.textContent=`${n}ページ ／ A3用紙${n/4}枚`;
+    el.className="";
+    pad.style.display="none";
+    $("#buildBtn").disabled=false;
+  }
+}
+function padBlanks(){
+  const r=S.pages.length%4; if(!r)return;
+  const at=Math.max(0,S.pages.length-1);   // 裏表紙の手前に入れる
+  for(let i=0;i<4-r;i++) S.pages.splice(at,0,{template:"blank"});
+  save("all");
+}
+
+/* ---------- 写真トレイ ---------- */
+function renderTray(){
+  $("#tray").innerHTML=S.photos.map(p=>`
+    <figure onclick="addPage('${p.name}')" title="${p.name}">
+      <img loading="lazy" src="/api/thumb?f=${encodeURIComponent(p.name)}&s=180">
+      <span class="o">${p.orientation==="portrait"?"縦":"横"}</span>
+    </figure>`).join("");
+}
+function addPage(name){
+  const p=S.photos.find(x=>x.name===name);
+  const t=p&&p.orientation==="portrait"?"portrait-one":"landscape-one";
+  const at=Math.max(0,S.pages.length-1);
+  S.pages.splice(at,0,{template:t,photos:[name],caption:""});
+  sel=at; save("all");
+}
+
+/* ---------- ページ一覧 ---------- */
+function renderGrid(){
+  const g=$("#grid");
+  $("#gridEmpty").style.display=S.pages.length?"none":"";
+  g.innerHTML=S.pages.map((pg,i)=>`
+    <div class="card ${i===sel?"sel":""}" draggable="true" data-i="${i}" onclick="pick(${i})">
+      <img class="ph" loading="lazy" src="/api/preview?i=${i}&s=1.5&v=${ver}">
+      <span class="side">${(i+1)%2?"右":"左"}</span>
+      ${pg.rotate?'<span class="rot">回転</span>':""}
+      <div class="meta"><span class="no">${i+1}</span><span class="tn">${pg.template}</span></div>
+    </div>`).join("");
+  [...g.children].forEach(c=>{
+    c.ondragstart=e=>{e.dataTransfer.setData("text/plain",c.dataset.i);c.classList.add("drag")};
+    c.ondragend=()=>c.classList.remove("drag");
+    c.ondragover=e=>{e.preventDefault();c.classList.add("over")};
+    c.ondragleave=()=>c.classList.remove("over");
+    c.ondrop=e=>{
+      e.preventDefault(); c.classList.remove("over");
+      const from=+e.dataTransfer.getData("text/plain"), to=+c.dataset.i;
+      if(from===to)return;
+      const [m]=S.pages.splice(from,1); S.pages.splice(to,0,m);
+      sel=to; save("all");
+    };
+  });
+}
+function pick(i){ sel=i; renderGrid(); renderIns(); }
+
+/* ---------- 選択ページの設定 ---------- */
+function renderIns(){
+  const el=$("#ins");
+  if(sel<0||sel>=S.pages.length){
+    el.innerHTML='<div class="empty">ページを選ぶと<br>ここで版面を変えられます</div>'; return;
+  }
+  const pg=S.pages[sel];
+  const tpl=S.templates.find(t=>t.name===pg.template)||{slots:0};
+  const opts=S.templates.map(t=>
+    `<option value="${t.name}" ${t.name===pg.template?"selected":""}>${t.label}</option>`).join("");
+  const slots=[];
+  for(let i=0;i<tpl.slots;i++){
+    const cur=(pg.photos||[])[i]||"";
+    slots.push(`<div class="slot">
+      ${cur?`<img src="/api/thumb?f=${encodeURIComponent(cur)}&s=90">`:'<img>'}
+      <select onchange="setPhoto(${i},this.value)">
+        <option value="">— 選ぶ —</option>
+        ${S.photos.map(p=>`<option ${p.name===cur?"selected":""}>${p.name}</option>`).join("")}
+      </select></div>`);
+  }
+  el.innerHTML=`
+    <h2>${sel+1}ページ目（${(sel+1)%2?"右ページ":"左ページ"}）</h2>
+    <img id="insPrev" src="/api/preview?i=${sel}&s=2.6&v=${ver}">
+    <div class="field" style="margin-top:12px">
+      <label>版面</label>
+      <select onchange="setTpl(this.value)">${opts}</select>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" ${pg.rotate?"checked":""} onchange="setRot(this.checked)">
+      <span>写真を縦に回転する</span>
+    </label>
+    <p class="hint">横位置の写真を90度回して縦にします。向きは config.json の
+      rotate_direction（いま <b>${S.rotate_direction}</b>）。版面も縦向きのものへ自動で入れ替えます。</p>
+    ${tpl.slots?`<h2>写真</h2>${slots.join("")}`:""}
+    ${tpl.slots?`<div class="field"><label>キャプション</label>
+      <input type="text" value="${(pg.caption||"").replace(/"/g,"&quot;")}"
+        oninput="setCap('caption',this.value)"></div>`:""}
+    ${tpl.slots>1?`<div class="field"><label>キャプション（2枚目）</label>
+      <input type="text" value="${(pg.caption2||"").replace(/"/g,"&quot;")}"
+        oninput="setCap('caption2',this.value)"></div>`:""}
+    <h2>操作</h2>
+    <div class="row" style="flex-wrap:wrap;gap:6px">
+      <button onclick="dupPage()">複製</button>
+      <button onclick="insBlank()">白ページを後ろに</button>
+      <button onclick="delPage()">このページを削除</button>
+    </div>`;
+}
+function setTpl(v){ S.pages[sel].template=v; save("one"); }
+function setRot(on){
+  const pg=S.pages[sel];
+  if(on){
+    pg.rotate=S.rotate_direction||"ccw";
+    const alt=S.rotate_pairs[pg.template];
+    if(alt) pg.template=alt;
+  }else{
+    delete pg.rotate;
+    const back=Object.entries(S.rotate_pairs).find(([,v])=>v===pg.template);
+    if(back) pg.template=back[0];
+  }
+  save("one");
+}
+function setPhoto(i,v){
+  const pg=S.pages[sel]; pg.photos=pg.photos||[];
+  while(pg.photos.length<=i) pg.photos.push("");
+  pg.photos[i]=v; save("one");
+}
+function setCap(k,v){ S.pages[sel][k]=v; save(null); }
+function dupPage(){ S.pages.splice(sel+1,0,JSON.parse(JSON.stringify(S.pages[sel]))); sel++; save("all"); }
+function insBlank(){ S.pages.splice(sel+1,0,{template:"blank"}); save("all"); }
+function delPage(){ S.pages.splice(sel,1); sel=Math.min(sel,S.pages.length-1); save("all"); }
+
+/* ---------- 保存 ----------
+   保存が終わってからプレビューを取り直す（先に取ると古い状態が返る）        */
+function save(scope){
+  if(scope){ renderGrid(); renderIns(); renderCount(); }
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    await api("/api/pages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({pages:S.pages})});
+    ver++;
+    if(scope==="all") refreshAll(); else refreshOne();
+    renderCount();
+  }, scope?100:420);
+}
+function refreshAll(){
+  document.querySelectorAll("#grid .card").forEach(c=>{
+    c.querySelector(".ph").src=`/api/preview?i=${c.dataset.i}&s=1.5&v=${ver}`;
+  });
+  refreshOne();
+}
+function refreshOne(){
+  if(sel<0)return;
+  const c=document.querySelector(`.card[data-i="${sel}"] .ph`);
+  if(c)c.src=`/api/preview?i=${sel}&s=1.5&v=${ver}`;
+  const p=$("#insPrev");
+  if(p)p.src=`/api/preview?i=${sel}&s=2.6&v=${ver}`;
+}
+
+/* ---------- フォルダ・自動台割 ---------- */
+async function setSrc(){
+  const r=await api("/api/src",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({path:$("#src").value})});
+  if(!r.ok){ alert(r.error); return; }
+  S.photos=r.photos; S.src=$("#src").value; renderTray();
+}
+async function autoPlan(){
+  if(!S.photos.length){ alert("先に写真フォルダを読み込んでください"); return; }
+  if(S.pages.length && !confirm("いまの台割を作り直します。よろしいですか？")) return;
+  const r=await api("/api/autoplan",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({mode:$("#mode").value})});
+  if(!r.ok){ alert(r.error||"失敗しました"); return; }
+  S.pages=r.pages; sel=-1; ver++; renderAll();
+}
+
+/* ---------- 書き出し ---------- */
+async function build(){
+  const r=await api("/api/build",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({})});
+  if(!r.ok){ alert(r.error); return; }
+  $("#dls").innerHTML=""; $("#log").textContent="";
+  $("#modal").classList.add("on");
+  clearInterval(pollTimer);
+  pollTimer=setInterval(async()=>{
+    const j=await api("/api/build_status");
+    const pre=$("#log"); pre.textContent=j.log; pre.scrollTop=pre.scrollHeight;
+    if(j.done){
+      clearInterval(pollTimer);
+      $("#dls").innerHTML=j.files.map(f=>`
+        <div class="dl"><span class="n">${f.name}</span>
+          <span class="s">${f.mb} MB</span>
+          <a href="/api/download?f=${encodeURIComponent(f.name)}">保存</a></div>`).join("")
+        || '<p class="hint">生成されたファイルがありません。ログを確認してください。</p>';
+    }
+  },900);
+}
+function closeModal(){ $("#modal").classList.remove("on"); clearInterval(pollTimer); }
+
+load();
+</script>
+</body>
+</html>

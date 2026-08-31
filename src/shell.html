@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>写真集エディタ — コンビニ中綴じ</title>
+<style>/*__CSS__*/</style>
+</head>
+<body>
+
+<header>
+  <h1>写真集エディタ</h1>
+  <button id="pickBtn" onclick="togglePickPages()" disabled
+    title="複数のページを選んで、まとめて削除・複製します">選択</button>
+  <button id="prevBtn" onclick="openPreview()" disabled
+    title="全画面で、実際にめくったときの見開きを確認します">プレビュー</button>
+  <div class="settings">
+    <select id="orient" onchange="onOrientChange(this.value)"
+      title="ページの向き。縦=左とじ（横にめくる） / 横=上とじ（上にめくる）">
+      <option value="portrait">縦ページ</option>
+      <option value="landscape">横ページ</option>
+    </select>
+    <select id="book" onchange="onBookChange(this.value)" title="仕上がりの冊子サイズ。店頭ではこの2倍の紙を選びます（A4冊子→用紙A3 / B5冊子→用紙B4）">
+      <option value="A4">A4冊子</option>
+      <option value="B5">B5冊子</option>
+    </select>
+    <select id="delivery" title="入稿経路。USBメモリ・SDカードは容量無制限、ネットプリントは1ファイル10MBまで">
+      <option value="usb">USB・SD 無制限</option>
+      <option value="app">アプリ 30MB</option>
+      <option value="netprint">ネットプリント 10MB</option>
+    </select>
+    <span class="mini">解像度</span><input type="number" id="dpi" value="300" min="120" max="300" step="10"
+      title="マルチコピー機の推奨はカラー300dpi。これ以上は機械側で活かせません。上限のある入稿経路では、収まるまでここから自動で下がります">
+    <span class="mini">画質</span><input type="number" id="quality" value="95" min="50" max="95" step="1"
+      title="JPEG品質。最高95から始めます">
+  </div>
+  <span id="progress" style="display:none"></span>
+  <span class="spacer"></span>
+  <span id="count">—</span>
+  <button id="padBtn" onclick="padBlanks()" style="display:none"></button>
+  <button class="primary" id="buildBtn" onclick="exportPDF()" disabled>PDFを作る</button>
+</header>
+
+<main>
+  <div class="pane left">
+    <div class="paneHead">
+      <h2>写真</h2><span class="spacer"></span>
+      <button id="pickPhotosBtn" class="tiny" onclick="togglePickPhotos()"
+        style="display:none" title="複数の写真を選んでまとめて削除します">選択</button>
+    </div>
+    <div id="photoActions" class="actions" style="display:none"></div>
+    <div class="drop" id="drop" onclick="pickFolder()">
+      フォルダかファイルを<br>ドラッグ＆ドロップ<br><span class="mini">またはクリックして選択</span>
+    </div>
+    <div id="tray" class="tray"></div>
+    <p class="hint" id="trayEmpty">写真はこのブラウザの中だけで処理されます。<br>どこにも送信されません。</p>
+  </div>
+
+  <div class="pane" id="center">
+    <div id="grid"></div>
+    <div id="gridEmpty" class="empty">
+      写真を読み込むと<br>ここに台割が並びます
+    </div>
+  </div>
+
+  <div class="pane right" id="ins">
+    <div class="empty">読み込み中…</div>
+  </div>
+</main>
+
+<nav id="tabbar">
+  <button data-tab="photos" onclick="setTab('photos')">写真</button>
+  <button data-tab="grid" onclick="setTab('grid')">台割</button>
+  <button data-tab="ins" onclick="setTab('ins')">編集</button>
+</nav>
+
+<div id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="sheet">
+    <header><h1>PDFを作っています</h1><span class="spacer"></span>
+      <button onclick="closeModal()">閉じる</button></header>
+    <div class="body">
+      <div id="dls"></div>
+      <pre id="log"></pre>
+    </div>
+  </div>
+</div>
+
+<div id="prev">
+  <div class="bar">
+    <b>見開きプレビュー</b>
+    <span id="prevPos" class="pos"></span>
+    <span class="spacer"></span>
+    <button id="prevBack" onclick="previewGo(-1)" title="前へ（←）">◀ 前</button>
+    <button id="prevNext" onclick="previewGo(1)" title="次へ（→）">次 ▶</button>
+    <button onclick="closePreview()" title="閉じる（Esc）">閉じる</button>
+  </div>
+  <div class="stage" onclick="if(event.target===this)closePreview()">
+    <div class="spread" id="prevStage"></div>
+  </div>
+  <div class="foot">← → でめくる ／ Esc で閉じる ／ 表紙と裏表紙は単独で表示されます</div>
+</div>
+
+<div id="toast"></div>
+
+<input type="file" id="filePick" multiple accept="image/*" style="display:none">
+
+<script id="cfg-data" type="application/json">/*__CFG__*/</script>
+<script id="tpl-data" type="application/json">/*__TPL__*/</script>
+<script>/*__PDFLIB__*/</script>
+<script>/*__APP__*/</script>
+<script>/*__EXPORT__*/</script>
+<script>
+/* ── 入力まわり ── */
+const filePick = document.getElementById('filePick');
+filePick.addEventListener('change', e => {
+  if (e.target.files && e.target.files.length) importFiles(e.target.files);
+});
+function pickFolder(){ filePick.value=''; filePick.click(); }
+const drop = document.getElementById('drop');
+/* ページの並べ替えドラッグに反応しないよう、実ファイルのドラッグだけを相手にする */
+const isFileDrag = e => [...((e.dataTransfer && e.dataTransfer.types) || [])].includes('Files');
+['dragenter','dragover'].forEach(ev=>document.addEventListener(ev,e=>{
+  if(!isFileDrag(e)) return;
+  e.preventDefault(); drop.classList.add('hot');}));
+['dragleave','drop'].forEach(ev=>document.addEventListener(ev,e=>{
+  if(!isFileDrag(e)) return;
+  e.preventDefault(); if(ev==='drop'||e.target===document.documentElement) drop.classList.remove('hot');}));
+document.addEventListener('drop', async e=>{
+  if(!isFileDrag(e)) return;
+  e.preventDefault(); drop.classList.remove('hot');
+  const items=[...(e.dataTransfer.items||[])];
+  const files=[];
+  const walk = async (entry)=>{
+    if(!entry) return;
+    if(entry.isFile){ files.push(await new Promise(r=>entry.file(r))); }
+    else if(entry.isDirectory){
+      const rd=entry.createReader();
+      for(;;){ const batch=await new Promise(r=>rd.readEntries(r)); if(!batch.length)break;
+               for(const b of batch) await walk(b); }
+    }
+  };
+  if(items.length && items[0].webkitGetAsEntry){
+    for(const it of items) await walk(it.webkitGetAsEntry());
+  }
+  importFiles(files.length?files:e.dataTransfer.files);
+});
+syncControls();
+renderIns();
+renderCount();
+</script>
+</body>
+</html>

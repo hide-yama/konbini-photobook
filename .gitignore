@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Python の中間物
+__pycache__/
+*.pyc
+
+# アーカイブのうち「生成物」だけ外す（コードとREADMEは残す）
+archive/python/out/
+archive/python/lib/fonts/
+
+# ローカルの書き出し
+out/
+
+# 動作確認用の写真（個人の写真なので公開リポジトリには入れない）
+photos/
