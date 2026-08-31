@@ -677,12 +677,37 @@ function setBookInfo(k, v, immediate) {
   }, 250);
 }
 
+/** "fff" や "FFFFFF" も受け取り、#ffffff の形にそろえる。途中入力なら null */
+function normHex(v) {
+  let x = String(v == null ? '' : v).trim().replace(/^#/, '');
+  if (/^[0-9a-fA-F]{3}$/.test(x)) x = x.split('').map(c => c + c).join('');
+  return /^[0-9a-fA-F]{6}$/.test(x) ? '#' + x.toLowerCase() : null;
+}
+
+/** 色を決める。パレットとコード欄の両方を持っているので、
+    入力元でない側だけを書き換える（renderIns を呼ぶと入力中にフォーカスが飛ぶ）。 */
+function setColor(field, v, src) {
+  const hex = normHex(v);
+  if (!hex) return;
+  CFG[field] = hex;
+  saveBookInfo();
+  const sw = $('#sw_' + field), tx = $('#hex_' + field);
+  if (sw && src !== 'sw') sw.value = hex;
+  if (tx && src !== 'tx') tx.value = hex;
+  clearTimeout(setColor._t);
+  setColor._t = setTimeout(() => {
+    renderGrid();
+    const p = $('#insPrev'); if (p && S.sel >= 0) drawPage(p, S.pages[S.sel], S.sel + 1, 2.6);
+    drawPreview();
+  }, 150);
+}
+
 /* 画面のどこからでも色を吸える（写真からも）。Chrome/Edge の EyeDropper API。 */
 async function pickColor(field) {
   if (!window.EyeDropper) { toast('このブラウザはスポイトに対応していません'); return; }
   try {
     const { sRGBHex } = await new EyeDropper().open();
-    setBookInfo(field, sRGBHex, true);
+    setColor(field, sRGBHex);
   } catch (e) { /* Escでキャンセルされただけ */ }
 }
 
@@ -710,14 +735,21 @@ function fontSelect(field) {
 }
 
 function styleRow(field) {
+  /* 右ペインが狭いので、書体＋大きさ / 色 の2行に分ける */
   return `<div class="styleRow">
-    ${fontSelect(field)}
-    <label class="u">大きさ<input type="number" class="sz" min="6" max="120" step="0.5"
-      value="${effSize(field)}" onchange="setBookInfo('size_${field}',+this.value,true)"></label>
-    <label class="u">色<input type="color" value="${effColor(field)}"
-      oninput="setBookInfo('color_${field}',this.value,true)"></label>
-    <button class="tiny" onclick="pickColor('color_${field}')" title="画面から色を吸う（写真からも）">スポイト</button>
-  </div>`;
+      ${fontSelect(field)}
+      <input type="number" class="sz" min="6" max="120" step="0.5" title="文字の大きさ（pt）。空にすると版面の既定"
+        value="${effSize(field)}" onchange="setBookInfo('size_${field}',+this.value,true)"><span class="u">pt</span>
+    </div>
+    <div class="styleRow">
+      <input type="color" id="sw_color_${field}" value="${effColor(field)}" title="カラーパレット"
+        oninput="setColor('color_${field}',this.value,'sw')">
+      <input type="text" class="hex" id="hex_color_${field}" value="${effColor(field)}"
+        spellcheck="false" maxlength="7" title="カラーコード。#なしや3桁でも受け付けます"
+        oninput="setColor('color_${field}',this.value,'tx')">
+      <button class="tiny" onclick="pickColor('color_${field}')"
+        title="画面から色を吸う（写真からも）">スポイト</button>
+    </div>`;
 }
 
 function posPicker() {

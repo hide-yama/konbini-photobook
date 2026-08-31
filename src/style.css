@@ -233,10 +233,14 @@ body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
 .field .fontSel{margin-top:5px;width:100%;font-size:11px;padding:3px 7px}
 
 /* 本の情報：書体・大きさ・色を1行に */
-.styleRow{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap}
-.styleRow .fontSel{margin-top:0;flex:1 1 100%}
+.styleRow{display:flex;align-items:center;gap:6px;margin-top:5px}
+.styleRow input[type=color]{flex:0 0 auto}
+.styleRow .hex{flex:1 1 auto;min-width:0}
+.styleRow .fontSel{margin-top:0;flex:1 1 auto;min-width:0}
 .styleRow .u{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--dim)}
 .styleRow input.sz{width:56px;padding:3px 6px;font-size:11px}
+.styleRow input.hex{width:78px;padding:3px 6px;font-size:11px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:lowercase}
 .styleRow input[type=color]{width:30px;height:24px;padding:1px;border:1px solid var(--line);
   border-radius:5px;background:#fff;cursor:pointer}
 .posGrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
