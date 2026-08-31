@@ -64,6 +64,8 @@ h2:not(:first-child){margin-top:20px}
 .field{margin-bottom:12px}
 .field label{display:block;font-size:11px;color:var(--dim);margin-bottom:4px;font-weight:600}
 .field select,.field input,.field textarea{width:100%}
+/* チェックボックス等まで幅100%にすると、ラベルが次の行へ落ちる */
+.field input[type=checkbox],.field input[type=color],.field input[type=radio]{width:auto}
 .field textarea{resize:vertical;line-height:1.5;min-height:52px}
 #insPrev{width:100%;max-height:300px;object-fit:contain;border:1px solid var(--line);
   border-radius:5px;display:block;background:#fafaf9}
@@ -245,3 +247,6 @@ body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
   border-radius:5px;background:#fff;cursor:pointer}
 .posGrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
 .posGrid button{padding:7px 0;font-size:11px}
+
+.styleRow input.op{flex:1 1 auto;min-width:0;padding:0;height:20px}
+.field .toggle{margin-bottom:6px}

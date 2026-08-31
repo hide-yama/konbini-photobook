@@ -4,7 +4,7 @@
    出典: 富士フイルムBIジャパン「小冊子プリント パーフェクトガイド」2026年5月 第2版 */
 'use strict';
 
-const { PDFDocument } = PDFLib;
+const { PDFDocument, rgb } = PDFLib;
 
 /* 入稿経路ごとのファイル容量上限（MB）。0 = 無制限
    出典: https://faq.printing.ne.jp/ マルチコピー機でプリントできるファイル容量 */
@@ -24,6 +24,10 @@ async function buildPageOps(pg, pageNo, dpi, quality) {
   const t = T[pg.template];
   if (!t) return ops;
   const { dx, dy } = gutterShift(t, pageNo);
+
+  /* 帯は写真の上・文字の下。ラスタにせずベクターの矩形で置く */
+  const band = pageBand(pg, t);
+  if (band) ops.push({ kind: 'rect', ...band });
 
   for (const fr of (t.images || [])) {
     const nm = (pg.photos || [])[fr.slot || 0];
@@ -79,11 +83,13 @@ async function renderBook(pages, dpi, q, log) {
 }
 
 /* 各ページの画像はPDFに1回ずつしか入らないので、総バイト数が仕上がりの目安になる */
-const opsBytes = all => all.reduce((s, ops) => s + ops.reduce((t, o) => t + o.bytes.length, 0), 0);
+const opsBytes = all => all.reduce((s, ops) =>
+  s + ops.reduce((t, o) => t + (o.bytes ? o.bytes.length : 0), 0), 0);
 
 async function embedAll(doc, ops) {
   const out = [];
   for (const op of ops) {
+    if (op.kind === 'rect') { out.push(null); continue; }   // 矩形は埋め込み不要
     try { out.push(op.kind === 'png' ? await doc.embedPng(op.bytes) : await doc.embedJpg(op.bytes)); }
     catch (e) { console.warn('埋め込み失敗', e); out.push(null); }
   }
@@ -91,8 +97,20 @@ async function embedAll(doc, ops) {
 }
 
 /* mm・左上原点 → PDFの pt・左下原点 */
+const hexRgb = h => {
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(h || '#000000'));
+  return m ? rgb(parseInt(m[1], 16) / 255, parseInt(m[2], 16) / 255, parseInt(m[3], 16) / 255)
+           : rgb(0, 0, 0);
+};
+
 function placeOps(page, ops, embeds) {
   ops.forEach((op, i) => {
+    if (op.kind === 'rect') {
+      page.drawRectangle({ x: op.x * MM, y: (PH - op.y - op.h) * MM,
+        width: op.w * MM, height: op.h * MM,
+        color: hexRgb(op.color), opacity: op.opacity });
+      return;
+    }
     const img = embeds[i];
     if (!img) return;
     page.drawImage(img, { x: op.x * MM, y: (PH - op.y - op.h) * MM,

@@ -255,6 +255,38 @@ const GAP_RATIO = 0.6;          // タイトル字高に対する、サブタイ
 /** ページ端からの余白（mm）。A4縦の18mmを基準に、辺の長さで比例させる */
 const coverMargin = () => ({ x: PW * (18 / 210), y: PH * (18 / 297) });
 
+/** 文字の下に敷く帯（座布団）。ページの端から伸びて、文字を包む。
+    off なら null。文字が空のときも敷かない。 */
+function coverBandSpec(ti, su, titleText, subText) {
+  if (!CFG.band) return null;
+  const PT = 25.4 / 72;
+  const te = titleText ? textExtent(ti, titleText) : null;
+  const se = (su && subText) ? textExtent(su, subText) : null;
+  const maxW = Math.max(te ? te.wMm : 0, se ? se.wMm : 0);
+  if (!maxW) return null;
+
+  const m = coverMargin();
+  const padX = ti.size * PT * 0.55, padY = ti.size * PT * 0.45;
+  const len = m.x + maxW + padX;                       // 端からの伸び
+  const toRight = (COVER_POS[CFG.cover_pos] ? CFG.cover_pos : 'bl')[1] === 'r';
+
+  /* 文字の上端と下端 */
+  const box = (sp, ex) => {
+    const up = sp.anchor === 'bottom' ? (ex.lines - 1) * sp.leading * PT : 0;
+    const top = sp.y - sp.size * PT - up;
+    return [top, top + (ex.lines - 1) * sp.leading * PT + sp.size * PT * 1.25];
+  };
+  let top = Infinity, bottom = -Infinity;
+  for (const [sp, ex] of [[ti, te], [su, se]]) {
+    if (!sp || !ex) continue;
+    const [a, b] = box(sp, ex);
+    top = Math.min(top, a); bottom = Math.max(bottom, b);
+  }
+  return { x: toRight ? PW - len : 0, y: top - padY, w: len, h: (bottom - top) + padY * 2,
+           color: CFG.band_color || '#000000',
+           opacity: Math.max(0, Math.min(1, (CFG.band_opacity == null ? 70 : +CFG.band_opacity) / 100)) };
+}
+
 /** タイトル／サブタイトルの位置・大きさ・色を、いまの設定から決めて上書きする。
     ti, su は版面側の定義（既定値として使う）。 */
 function coverBlockSpecs(ti, su, titleText) {
@@ -307,6 +339,28 @@ function textFieldsOf(t) {
 }
 const isHidden = (pg, k) => (pg.hide || []).includes(k);
 
+/** 表紙の文字と帯をまとめて計算する。文字（pageTexts）と帯（pageBand）が
+    別々に計算すると必ずずれるので、入口はここ1つにする。 */
+function coverLayout(t, vals) {
+  if (!t || !t.cover_block) return null;
+  const ti0 = (t.texts || []).find(x => String(x.content).includes('{title}'));
+  if (!ti0) return null;
+  const su0 = (t.texts || []).find(x => String(x.content).includes('{subtitle}'));
+  const spec = coverBlockSpecs(withChosenFont(ti0, ti0.content),
+                               su0 && withChosenFont(su0, su0.content), vals.title);
+  return { ...spec, band: coverBandSpec(spec.title, spec.subtitle, vals.title, vals.subtitle) };
+}
+
+/** そのページに敷く帯。写真の上・文字の下に描く */
+function pageBand(pg, t) {
+  const hide = new Set(pg.hide || []);
+  const cv = coverLayout(t, {
+    title: hide.has('title') ? '' : (pg.title || CFG.title || ''),
+    subtitle: hide.has('subtitle') ? '' : (pg.subtitle || CFG.subtitle || ''),
+  });
+  return cv && cv.band;
+}
+
 function pageTexts(pg, t, pageNo) {
   const hide = new Set(pg.hide || []);
   const pick = (k, v) => (hide.has(k) ? '' : v);
@@ -320,14 +374,11 @@ function pageTexts(pg, t, pageNo) {
   let list = [...(t.texts || [])];
 
   /* 表紙は、版面の座標ではなく設定（四隅・大きさ・色）で置き直す */
-  if (t.cover_block) {
+  const cv = coverLayout(t, vals);
+  if (cv) {
     const ti = list.find(x => String(x.content).includes('{title}'));
     const su = list.find(x => String(x.content).includes('{subtitle}'));
-    if (ti) {
-      const spec = coverBlockSpecs(withChosenFont(ti, ti.content), su && withChosenFont(su, su.content),
-                                   vals.title);
-      list = list.map(x => (x === ti ? spec.title : (x === su && spec.subtitle ? spec.subtitle : x)));
-    }
+    list = list.map(x => (x === ti ? cv.title : (x === su && cv.subtitle ? cv.subtitle : x)));
   }
   if (CFG.page_numbers && pageNo >= (CFG.page_number_start || 3) && t.nombre !== false) {
     const sm = CFG.safe_margin_mm || 7;
@@ -441,11 +492,18 @@ function wrapText(text, font, wPx) {
   return lines;
 }
 
-/** 描かずに行数だけ知りたいとき。倍率によらず同じ数になるので固定倍率で測る */
-function countLines(ts, text) {
+/** 描かずに、行数と一番長い行の幅(mm)を知る。帯の長さを決めるのに要る。
+    倍率によらない値なので固定倍率で測る。 */
+function textExtent(ts, text) {
   const S = 4;
-  return wrapText(text, fontSpec(ts, ts.size * (25.4 / 72) * S), (ts.w || 60) * S).length;
+  const font = fontSpec(ts, ts.size * (25.4 / 72) * S);
+  const lines = wrapText(text, font, (ts.w || 60) * S);
+  _measure.font = font;
+  let max = 0;
+  for (const l of lines) max = Math.max(max, _measure.measureText(l).width);
+  return { lines: lines.length, wMm: max / S };
 }
+const countLines = (ts, text) => textExtent(ts, text).lines;
 
 function renderText(ts, pxPerMm) {
   const sizePx = ts.size * (25.4 / 72) * pxPerMm;
@@ -503,6 +561,15 @@ function drawPage(cv, pg, pageNo, pxPerMm) {
     const oy = (fr.y + dy + (fr.h - f.drawH) / 2) * pxPerMm;
     x.drawImage(src, f.sx, f.sy, f.sw, f.sh, ox, oy, f.drawW * pxPerMm, f.drawH * pxPerMm);
   }
+  const band = pageBand(pg, t);
+  if (band) {
+    x.save();
+    x.globalAlpha = band.opacity;
+    x.fillStyle = band.color;
+    x.fillRect(band.x * pxPerMm, band.y * pxPerMm, band.w * pxPerMm, band.h * pxPerMm);
+    x.restore();
+  }
+
   for (const ts of pageTexts(pg, t, pageNo)) {
     const r = renderText(ts, pxPerMm);
     const px = (ts.x + dx) * pxPerMm;
@@ -681,12 +748,15 @@ const INFO_KEY = 'photobook.bookinfo';
 const INFO_FIELDS = ['title', 'subtitle', 'credit',
                      'font_title', 'font_subtitle', 'font_credit',
                      'cover_pos', 'size_title', 'size_subtitle',
-                     'color_title', 'color_subtitle'];
+                     'color_title', 'color_subtitle',
+                     'band', 'band_color', 'band_opacity'];
 
 function loadBookInfo() {
   try {
     const j = JSON.parse(localStorage.getItem(INFO_KEY) || 'null');
-    if (j) for (const k of INFO_FIELDS) if (typeof j[k] === 'string') CFG[k] = j[k];
+    /* 数値や真偽値も入るので、型で弾かない（以前は文字列だけ拾っていて
+       文字サイズが保存されていなかった） */
+    if (j) for (const k of INFO_FIELDS) if (j[k] !== undefined && j[k] !== null) CFG[k] = j[k];
   } catch (e) { /* file:// やプライベートウィンドウでは使えないことがある */ }
 }
 
@@ -791,6 +861,28 @@ function styleRow(field) {
     </div>`;
 }
 
+function bandPicker() {
+  const on = !!CFG.band;
+  return `<div class="field"><label>帯（座布団）</label>
+    <label class="toggle"><input type="checkbox" ${on ? 'checked' : ''}
+      onchange="setBookInfo('band',this.checked,true)"><span>文字の下に帯を敷く</span></label>
+    ${on ? `<div class="styleRow">
+      <input type="color" id="sw_band_color" value="${CFG.band_color || '#000000'}" title="帯の色"
+        oninput="setColor('band_color',this.value,'sw')">
+      <input type="text" class="hex" id="hex_band_color" value="${CFG.band_color || '#000000'}"
+        spellcheck="false" maxlength="7" oninput="setColor('band_color',this.value,'tx')">
+      <button class="tiny" onclick="pickColor('band_color')" title="画面から色を吸う">スポイト</button>
+    </div>
+    <div class="styleRow">
+      <input type="range" min="0" max="100" step="5" class="op"
+        value="${CFG.band_opacity == null ? 70 : CFG.band_opacity}"
+        oninput="setBookInfo('band_opacity',+this.value,true)">
+      <span class="u">濃さ ${CFG.band_opacity == null ? 70 : CFG.band_opacity}%</span>
+    </div>
+    <p class="hint">選んだ隅のページ端から伸びて、文字を包みます。</p>` : ''}
+  </div>`;
+}
+
 function posPicker() {
   return `<div class="field"><label>表紙の文字の位置</label>
     <div class="posGrid">
@@ -811,6 +903,7 @@ function bookInfoFields() {
   return row('title', 'タイトル', '写真集タイトル\n（改行できます）', CFG.title, true, true)
     + row('subtitle', 'サブタイトル', '2026', CFG.subtitle, false, true)
     + posPicker()
+    + bandPicker()
     + row('credit', 'クレジット', 'photo by …', CFG.credit)
     + `<p class="hint">表紙の <code>{title}</code> <code>{subtitle}</code>、
         裏表紙の <code>{credit}</code> に入ります。書体は
