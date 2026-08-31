@@ -24,15 +24,6 @@
       <option value="A4">A4冊子</option>
       <option value="B5">B5冊子</option>
     </select>
-    <select id="delivery" title="入稿経路。USBメモリ・SDカードは容量無制限、ネットプリントは1ファイル10MBまで">
-      <option value="usb">USB・SD 無制限</option>
-      <option value="app">アプリ 30MB</option>
-      <option value="netprint">ネットプリント 10MB</option>
-    </select>
-    <span class="mini">解像度</span><input type="number" id="dpi" value="300" min="120" max="300" step="10"
-      title="マルチコピー機の推奨はカラー300dpi。これ以上は機械側で活かせません。上限のある入稿経路では、収まるまでここから自動で下がります">
-    <span class="mini">画質</span><input type="number" id="quality" value="95" min="50" max="95" step="1"
-      title="JPEG品質。最高95から始めます">
   </div>
   <span id="progress" style="display:none"></span>
   <span class="spacer"></span>

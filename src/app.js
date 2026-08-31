@@ -98,10 +98,6 @@ function syncControls() {
   setTab(document.body.dataset.tab || 'grid');
   const p = $('#book'); if (p) p.value = BOOK_NAME;
   const or = $('#orient'); if (or) or.value = ORIENT_NAME;
-  const d = $('#delivery');
-  if (d && [...d.options].some(o => o.value === CFG.delivery)) d.value = CFG.delivery;
-  const dpi = $('#dpi'); if (dpi && CFG.image_dpi) dpi.value = CFG.image_dpi;
-  const q = $('#quality'); if (q && CFG.jpeg_quality) q.value = CFG.jpeg_quality;
 }
 
 const S = {
@@ -717,7 +713,17 @@ function renderTray() {
     </figure>`).join('');
   [...tray.children].forEach(el => {
     const name = S.photos[+el.dataset.i].name;
-    el.onclick = () => (S.pickPhotos ? markPhoto(name) : addPage(name));
+    el.onclick = () => {
+      if (S.pickPhotos) return markPhoto(name);
+      if (ASSIGN) {
+        const { page, slot } = ASSIGN;
+        ASSIGN = null;
+        assignPhotoToPage(page, name, slot);
+        if (NARROW()) setTab('ins');
+        return;
+      }
+      addPage(name);
+    };
     el.draggable = !S.pickPhotos;
     el.ondragstart = e => {
       if (S.pickPhotos) { e.preventDefault(); return; }
@@ -738,6 +744,12 @@ function renderTray() {
   }
   const bar = $('#photoActions');
   if (!bar) return;
+  if (ASSIGN) {
+    bar.style.display = '';
+    bar.innerHTML = `<span class="mini">${ASSIGN.page + 1}ページ目に入れる写真をタップ</span>
+      <button onclick="cancelAssign()">やめる</button>`;
+    return;
+  }
   if (!S.pickPhotos) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
   const k = S.markedPhotos.size;
   bar.style.display = '';
@@ -766,10 +778,23 @@ function clearDropMarks() {
 
 function endDrag() { DRAG.kind = null; DRAG.from = -1; DRAG.to = -1; DRAG.photo = null; clearDropMarks(); }
 
+/* 「この枠に入れる写真を選ぶ」状態。ドラッグの使えないタッチ用 */
+let ASSIGN = null;                 // { page, slot }
+
+function startAssign(slot) {
+  if (S.sel < 0) return;
+  ASSIGN = { page: S.sel, slot };
+  if (NARROW()) setTab('photos');
+  renderTray();
+  toast('入れる写真をタップしてください');
+}
+
+function cancelAssign() { ASSIGN = null; renderTray(); }
+
 /** トレイから落とされた写真をページへ入れる。
     空きスロットがあればそこへ、無ければ1枚目を差し替える。
     写真を置けない版面（白ページ・裏表紙など）は、縦いっぱいの版面に変える。 */
-function assignPhotoToPage(i, name) {
+function assignPhotoToPage(i, name, slot) {
   const pg = S.pages[i], p = photoBy(name);
   if (!pg || !p) return;
   const slots = (T[pg.template] || {}).slots || 0;
@@ -779,7 +804,7 @@ function assignPhotoToPage(i, name) {
   } else {
     pg.photos = pg.photos || [];
     while (pg.photos.length < slots) pg.photos.push('');
-    let at = pg.photos.findIndex(n => !n);
+    let at = (slot != null && slot >= 0 && slot < slots) ? slot : pg.photos.findIndex(n => !n);
     if (at < 0) at = 0;
     pg.photos[at] = name;
     /* 縦いっぱいの版面では「横写真だけ回す」という既定の規則をあてはめ直す。
@@ -792,6 +817,17 @@ function assignPhotoToPage(i, name) {
                     : `${i + 1}ページ目の写真を差し替えました`);
   }
   S.sel = i;
+  renderAll();
+}
+
+/** 選択中のページを1つ前／後ろへ動かす。ドラッグの使えないタッチ用 */
+function movePageBy(d) {
+  const i = S.sel, j = i + d;
+  if (i < 0 || j < 0 || j >= S.pages.length) return;
+  const [m] = S.pages.splice(i, 1);
+  S.pages.splice(j, 0, m);
+  S.sel = j;
+  S.markedPages.clear(); S.lastMark = null;
   renderAll();
 }
 
@@ -915,7 +951,8 @@ function renderIns() {
     const cur = (pg.photos || [])[s] || '';
     const p = photoBy(cur);
     slots.push(`<div class="slot">
-      <img src="${p ? p.thumb : ''}" alt="">
+      <img src="${p ? p.thumb : ''}" alt="" class="pick" onclick="startAssign(${s})"
+           title="タップして写真を選ぶ">
       <select onchange="setPhoto(${s},this.value)">
         <option value="">— 選ぶ —</option>
         ${S.photos.map(q => `<option ${q.name === cur ? 'selected' : ''}>${esc(q.name)}</option>`).join('')}
@@ -955,6 +992,12 @@ function renderIns() {
       <input type="text" value="${esc(pg.caption || '')}" oninput="setCap('caption',this.value)"></div>` : ''}
     ${t.slots > 1 ? `<div class="field"><label>キャプション（2枚目）</label>
       <input type="text" value="${esc(pg.caption2 || '')}" oninput="setCap('caption2',this.value)"></div>` : ''}
+    <h2>順番</h2>
+    <div class="row" style="gap:6px">
+      <button onclick="movePageBy(-1)" ${i === 0 ? 'disabled' : ''}>← 前へ</button>
+      <button onclick="movePageBy(1)" ${i === S.pages.length - 1 ? 'disabled' : ''}>後ろへ →</button>
+    </div>
+    <p class="hint">中央のページはドラッグでも並べ替えられます（PCのみ）。</p>
     <h2>操作</h2>
     <div class="row" style="flex-wrap:wrap;gap:6px">
       <button onclick="openPreview(${i})">この見開きを大きく見る</button>

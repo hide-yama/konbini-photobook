@@ -104,14 +104,16 @@ function placeOps(page, ops, embeds) {
 async function exportPDF() {
   const n = S.pages.length;
   if (n % 4) { toast('ページ数が4の倍数ではありません'); return; }
-  const route = $('#delivery').value || CFG.delivery || 'usb';
+  /* 画面には出していない。既定は usb（容量無制限）＝最高品質のまま1本にする。
+     ネットプリントで通したいときだけ config.json の delivery を変える。 */
+  const route = CFG.delivery || 'usb';
   const limit = ROUTE_LIMIT[route] ?? 0;          // 0 = 無制限
   const title = CFG.title || '写真集';
   const paper = BOOK[BOOK_NAME].paper;            // 店頭で選ぶ用紙
   const toji = ORIENT[ORIENT_NAME].toji(CFG.binding);
   const tojiBtn = CFG.binding === 'right' ? '「右とじ / 下とじ」' : '「左とじ / 上とじ」';
-  let dpi = +$('#dpi').value || CFG.image_dpi || 250;
-  let q = +$('#quality').value || CFG.jpeg_quality || 82;
+  let dpi = CFG.image_dpi || 300;
+  let q = CFG.jpeg_quality || 95;
 
   openModal();
   const log = m => { const p = $('#log'); p.textContent += m + '\n'; p.scrollTop = p.scrollHeight; };
