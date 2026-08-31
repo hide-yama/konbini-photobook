@@ -12,7 +12,7 @@ button:hover:not(:disabled){background:#f0f0ee}
 button:disabled{opacity:.4;cursor:not-allowed}
 button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
 button.primary:hover:not(:disabled){background:#255a3f}
-select,input[type=text],input[type=number]{font:inherit;padding:5px 8px;border:1px solid var(--line);
+select,textarea,input[type=text],input[type=number]{font:inherit;padding:5px 8px;border:1px solid var(--line);
   border-radius:6px;background:#fff;color:var(--ink)}
 .row{display:flex;align-items:center;gap:8px}
 h3{font-size:12px;margin:14px 0 7px;color:var(--dim);letter-spacing:.04em}
@@ -63,7 +63,8 @@ h2:not(:first-child){margin-top:20px}
 
 .field{margin-bottom:12px}
 .field label{display:block;font-size:11px;color:var(--dim);margin-bottom:4px;font-weight:600}
-.field select,.field input{width:100%}
+.field select,.field input,.field textarea{width:100%}
+.field textarea{resize:vertical;line-height:1.5;min-height:52px}
 #insPrev{width:100%;max-height:300px;object-fit:contain;border:1px solid var(--line);
   border-radius:5px;display:block;background:#fafaf9}
 .slot{display:flex;align-items:center;gap:7px;margin-bottom:6px}

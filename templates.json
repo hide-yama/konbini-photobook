@@ -276,22 +276,23 @@
           "x": 18,
           "y": 250,
           "w": 174,
-          "size": 26,
+          "size": 36.4,
           "font": "mincho-bold",
           "align": "left",
           "color": "#ffffff",
-          "leading": 34
+          "leading": 47.6,
+          "anchor": "bottom"
         },
         {
           "content": "{subtitle}",
           "x": 18,
-          "y": 261.0,
+          "y": 265.4,
           "w": 174,
-          "size": 9.5,
+          "size": 13.3,
           "font": "sans",
           "align": "left",
           "color": "#ffffff",
-          "leading": 14
+          "leading": 19.6
         }
       ],
       "nombre": false
@@ -317,22 +318,23 @@
           "x": 42,
           "y": 186,
           "w": 126,
-          "size": 19,
+          "size": 26.6,
           "font": "mincho",
           "align": "left",
           "color": "#1a1a1a",
-          "leading": 27
+          "leading": 37.8,
+          "anchor": "bottom"
         },
         {
           "content": "{subtitle}",
           "x": 42,
-          "y": 194.5,
+          "y": 197.9,
           "w": 126,
-          "size": 8.5,
+          "size": 11.9,
           "font": "sans",
           "align": "left",
           "color": "#8a8a8a",
-          "leading": 13
+          "leading": 18.2
         }
       ],
       "nombre": false
@@ -1114,22 +1116,23 @@
           "x": 20,
           "y": 166,
           "w": 257,
-          "size": 26,
+          "size": 36.4,
           "font": "mincho-bold",
           "align": "left",
           "color": "#ffffff",
-          "leading": 34
+          "leading": 47.6,
+          "anchor": "bottom"
         },
         {
           "content": "{subtitle}",
           "x": 20,
-          "y": 177.0,
+          "y": 181.4,
           "w": 257,
-          "size": 9.5,
+          "size": 13.3,
           "font": "sans",
           "align": "left",
           "color": "#ffffff",
-          "leading": 14
+          "leading": 19.6
         }
       ],
       "nombre": false
@@ -1155,22 +1158,23 @@
           "x": 74,
           "y": 150,
           "w": 149,
-          "size": 17,
+          "size": 23.8,
           "font": "mincho-bold",
           "align": "left",
           "color": "#222222",
-          "leading": 24
+          "leading": 33.6,
+          "anchor": "bottom"
         },
         {
           "content": "{subtitle}",
           "x": 74,
-          "y": 157.5,
+          "y": 160.5,
           "w": 149,
-          "size": 8.5,
+          "size": 11.9,
           "font": "sans",
           "align": "left",
           "color": "#8a8a8a",
-          "leading": 13
+          "leading": 18.2
         }
       ],
       "nombre": false
@@ -1301,5 +1305,6 @@
   },
   "_orientation": "縦(portrait)は templates / 横(landscape)は templates_landscape を使う。app.js の ORIENT 表が対応づけている。",
   "_nombre": "nombre:false のページにはノンブルを振らない。表紙・裏表紙・白ページ。コード側で名前を直書きしない。",
-  "_fonts": "テキストの font は mincho（明朝）/ gothic（ゴシック）/ serif（欧文セリフ）/ sans（欧文サンセリフ）と、それぞれの -bold。実体は app.js の FONT_STACK。欧文の2つも末尾に日本語フォントを積んであるので、日本語が混ざっても字が出ないことはない。"
+  "_fonts": "テキストの font は mincho（明朝）/ gothic（ゴシック）/ serif（欧文セリフ）/ sans（欧文サンセリフ）と、それぞれの -bold。実体は app.js の FONT_STACK。欧文の2つも末尾に日本語フォントを積んであるので、日本語が混ざっても字が出ないことはない。",
+  "_anchor": "テキストの anchor:\"bottom\" は、行が増えたときに上へ伸ばす指定。表紙のタイトルのように、下にサブタイトルが控えている場合に使う。"
 }

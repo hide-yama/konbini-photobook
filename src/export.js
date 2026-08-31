@@ -58,7 +58,7 @@ async function buildPageOps(pg, pageNo, dpi, quality) {
     ops.push({
       kind: 'png', bytes: new Uint8Array(await blob.arrayBuffer()),
       x: ts.x + dx,
-      y: ts.rotate ? ts.y + dy - r.hMm : ts.y + dy - ts.size * 25.4 / 72,
+      y: textTopMm(ts, r) + dy,
       w: r.wMm, h: r.hMm,
     });
   }

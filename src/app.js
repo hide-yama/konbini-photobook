@@ -216,6 +216,14 @@ function cropSrc(src, cr) {
   return c;
 }
 
+/** テキストの上端(mm)。anchor:"bottom" のときは、増えた行のぶん上へ伸ばす。
+    こうしないと、行が増えたときに下にあるサブタイトルへ食い込む。 */
+function textTopMm(ts, r) {
+  if (ts.rotate) return ts.y - r.hMm;
+  const up = ts.anchor === 'bottom' ? (r.lines - 1) * r.leadMm : 0;
+  return ts.y - ts.size * (25.4 / 72) - up;
+}
+
 /** 枠に収めたときの実寸(mm)と、切り出し矩形を返す */
 function fitBox(sw, sh, fw, fh, mode) {
   if (mode === 'cover') {
@@ -338,8 +346,10 @@ function renderText(ts, pxPerMm) {
     const lx = ts.align === 'right' ? bw - lw : (ts.align === 'center' ? (bw - lw) / 2 : 0);
     x.fillText(l, lx, i * lead);
   });
+  const leadMm = (ts.leading || ts.size * 1.5) * (25.4 / 72);
   const deg = norm360(ts.rotate || 0);
-  if (!deg) return { canvas: c, wMm: bw / pxPerMm, hMm: bh / pxPerMm };
+  if (!deg) return { canvas: c, wMm: bw / pxPerMm, hMm: bh / pxPerMm,
+                     lines: lines.length, leadMm };
   /* テキストの rotate は反時計回りが正（templates.json の rot-one が 90 = 反時計90） */
   const swap = deg === 90 || deg === 270;
   const r = document.createElement('canvas');
@@ -349,7 +359,8 @@ function renderText(ts, pxPerMm) {
   rx.translate(r.width / 2, r.height / 2);
   rx.rotate(-deg * Math.PI / 180);
   rx.drawImage(c, -c.width / 2, -c.height / 2);
-  return { canvas: r, wMm: r.width / pxPerMm, hMm: r.height / pxPerMm, rotated: deg };
+  return { canvas: r, wMm: r.width / pxPerMm, hMm: r.height / pxPerMm, rotated: deg,
+           lines: lines.length, leadMm };
 }
 
 /* ═══════════ プレビュー描画 ═══════════ */
@@ -378,8 +389,7 @@ function drawPage(cv, pg, pageNo, pxPerMm) {
   for (const ts of pageTexts(pg, t, pageNo)) {
     const r = renderText(ts, pxPerMm);
     const px = (ts.x + dx) * pxPerMm;
-    const ty = (ts.y + dy) * pxPerMm;
-    const py = ts.rotate ? (ty - r.canvas.height) : (ty - ts.size * (25.4 / 72) * pxPerMm);
+    const py = (textTopMm(ts, r) + dy) * pxPerMm;
     x.drawImage(r.canvas, px, py);
   }
   x.strokeStyle = '#e2e2e0'; x.strokeRect(.5, .5, cv.width - 1, cv.height - 1);
@@ -590,18 +600,23 @@ function fontSelect(field) {
 }
 
 function bookInfoFields() {
-  const row = (field, label, ph, val) => `
+  const row = (field, label, ph, val, multi) => `
     <div class="field"><label>${label}</label>
-      <input type="text" value="${esc(val || '')}" placeholder="${ph}"
-        oninput="setBookInfo('${field}',this.value)">
+      ${multi
+        ? `<textarea rows="2" placeholder="${ph}"
+             oninput="setBookInfo('${field}',this.value)">${esc(val || '')}</textarea>`
+        : `<input type="text" value="${esc(val || '')}" placeholder="${ph}"
+             oninput="setBookInfo('${field}',this.value)">`}
       ${fontSelect(field)}</div>`;
-  return row('title', 'タイトル', '写真集タイトル', CFG.title)
+  return row('title', 'タイトル', '写真集タイトル\n（改行できます）', CFG.title, true)
     + row('subtitle', 'サブタイトル', '2026', CFG.subtitle)
     + row('credit', 'クレジット', 'photo by …', CFG.credit)
     + `<p class="hint">表紙の <code>{title}</code> <code>{subtitle}</code>、
         裏表紙の <code>{credit}</code> に入ります。書体は
         <b>明朝体・ゴシック体</b>が日本語向け、<b>セリフ体・サンセリフ体</b>が欧文向けです
         （欧文を選んでも日本語は表示されます）。
+        タイトルは<b>改行できます</b>。長いときは枠幅で自動的にも折り返します。
+        行が増えると上へ伸びるので、サブタイトルに重なりません。
         この設定はブラウザに保存され、次に開いたときも残ります。</p>`;
 }
 
