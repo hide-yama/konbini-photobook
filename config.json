@@ -7,8 +7,8 @@
   "_plan_mode_note": "自動台割の組み方。fill=全ページいっぱい（ページと向きの違う写真は回転） / portrait=全面と余白ありを混ぜる / simple=標準5種。画面には出していないので、変えるならここ。リズムは app.js の RHYTHM。",
   "orientation": "portrait",
   "_orientation_note": "ページの向き。portrait=縦・左とじ（横にめくる） / landscape=横・上とじ（上にめくる）。版面は templates.json の templates / templates_landscape に分かれている。",
-  "book": "A4",
-  "_book_note": "仕上がりの冊子サイズ。A4冊子は店頭で用紙A3、B5冊子は用紙B4を選ぶ。寸法は app.js の BOOK 表。版面(templates.json)はA4基準で描き、B5のときは比例縮小して使う。",
+  "book": "B5",
+  "_book_note": "仕上がりの冊子サイズ。既定はB5。B5冊子は店頭で用紙B4、A4冊子は用紙A3を選ぶ。寸法は app.js の BOOK 表。版面(templates.json)はA4基準で描き、B5のときは比例縮小して使う。",
 
   "safe_margin_mm": 7,
   "_safe_margin_note": "コンビニ機の非印字領域は約5mm。折りズレの保険を含め7mmを推奨。",

@@ -25,7 +25,7 @@ const ORIENT = {
                toji: b => (b === 'right' ? '下とじ' : '上とじ') },
 };
 
-let BOOK_NAME = BOOK[CFG.book] ? CFG.book : 'A4';
+let BOOK_NAME = BOOK[CFG.book] ? CFG.book : 'B5';
 let ORIENT_NAME = ORIENT[CFG.orientation] ? CFG.orientation : 'portrait';
 let PW, PH, T, PAIRS, FILL_TPL;
 

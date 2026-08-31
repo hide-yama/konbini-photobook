@@ -73,8 +73,8 @@ open photobook.html
 5. **冊子サイズと店頭で選ぶ用紙は別物**（`BOOK` 表）。
    | 仕上がり | データのページサイズ | 店頭で選ぶ用紙 |
    |---|---|---|
+   | B5冊子（既定） | 182×257 | **B4** |
    | A4冊子 | 210×297 | **A3** |
-   | B5冊子 | 182×257 | **B4** |
    ガイドの「A4冊子にしたい ➡ 用紙サイズ A3」に対応。データをA3に組んではいけない。
 6. **とじ方向は「左とじ／右とじ」** — 長辺とじ／短辺とじではない。
    `binding: "left"` → 縦なら左とじ・横なら上とじ。`"right"` → 右とじ・下とじ。
@@ -223,11 +223,11 @@ open photobook.html
 ```bash
 python3 -c "
 from pypdf import PdfReader
-r = PdfReader('photobook_A4.pdf'); b = r.pages[0].mediabox
+r = PdfReader('photobook_B5_tate.pdf'); b = r.pages[0].mediabox
 print(len(r.pages), 'ページ', f'{float(b.width)/72*25.4:.0f}x{float(b.height)/72*25.4:.0f}mm')"
 ```
 
-- A4冊子 = 210×297mm、B5冊子 = 182×257mm
+- B5冊子 = 182×257mm（既定）、A4冊子 = 210×297mm
 - **PDFのページ数 = 台割のページ数**（面付けしないので1:1。÷2にはならない）
 - 4の倍数であること。99ページ以下であること
 
