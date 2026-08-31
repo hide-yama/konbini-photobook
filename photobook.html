@@ -717,21 +717,54 @@ function pageTexts(pg, t, pageNo) {
   return out;
 }
 
-/* 4書体。欧文の2つも末尾に日本語フォントを積んであるので、
-   日本語が混ざっても字が出ないことはない（欧文字だけ欧文書体になる）。 */
-const JP_MINCHO = '"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif';
-const JP_GOTHIC = '"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif';
-const FONT_STACK = {
-  mincho: JP_MINCHO,          'mincho-bold': JP_MINCHO,
-  gothic: JP_GOTHIC,          'gothic-bold': JP_GOTHIC,
-  serif: 'Georgia,"Times New Roman",' + JP_MINCHO,
-  'serif-bold': 'Georgia,"Times New Roman",' + JP_MINCHO,
-  sans: '"Helvetica Neue",Arial,' + JP_GOTHIC,
-  'sans-bold': '"Helvetica Neue",Arial,' + JP_GOTHIC,
-};
-const FONT_LABEL = { mincho: '明朝体', gothic: 'ゴシック体',
-                     serif: 'セリフ体（欧文）', sans: 'サンセリフ体（欧文）' };
-const FONT_KEYS = ['mincho', 'gothic', 'serif', 'sans'];
+/* ── 書体 ──
+   macOS に入っているものを前提に並べている。実在を確認済み（2026-09）。
+   どの書体にも末尾に日本語フォントを積むので、欧文書体を選んでも和文は出る。
+   s:'m' は和文フォールバックを明朝に、'g' はゴシックにする。 */
+const JP_M = '"Hiragino Mincho ProN","YuMincho","Yu Mincho","Noto Serif JP",serif';
+const JP_G = '"Hiragino Sans","YuGothic","Yu Gothic","Noto Sans JP",sans-serif';
+
+const FONTS = [
+  // 和文・明朝
+  { g: '和文・明朝', k: 'mincho',      n: 'ヒラギノ明朝',       f: '"Hiragino Mincho ProN"', s: 'm' },
+  { g: '和文・明朝', k: 'mincho-yu',   n: '游明朝',             f: '"YuMincho","Yu Mincho"', s: 'm' },
+  { g: '和文・明朝', k: 'bunkyu',      n: '凸版文久明朝',       f: '"Toppan Bunkyu Mincho"', s: 'm' },
+  { g: '和文・明朝', k: 'midashi',     n: '凸版文久見出明朝',   f: '"Toppan Bunkyu Midashi Mincho"', s: 'm' },
+  // 和文・ゴシック
+  { g: '和文・ゴシック', k: 'gothic',     n: 'ヒラギノ角ゴ',     f: '"Hiragino Sans"', s: 'g' },
+  { g: '和文・ゴシック', k: 'gothic-yu',  n: '游ゴシック',       f: '"YuGothic","Yu Gothic"', s: 'g' },
+  { g: '和文・ゴシック', k: 'bunkyu-g',   n: '凸版文久ゴシック', f: '"Toppan Bunkyu Gothic"', s: 'g' },
+  { g: '和文・ゴシック', k: 'maru',       n: 'ヒラギノ丸ゴ',     f: '"Hiragino Maru Gothic ProN"', s: 'g' },
+  { g: '和文・ゴシック', k: 'tsukushi',   n: '筑紫A丸ゴシック',  f: '"Tsukushi A Round Gothic"', s: 'g' },
+  // 和文・その他
+  { g: '和文・その他', k: 'kaisho',    n: 'Klee（楷書）',       f: '"Klee","Klee One"', s: 'm' },
+  { g: '和文・その他', k: 'kyokasho',  n: '游教科書体',         f: '"YuKyokasho"', s: 'm' },
+  // 欧文・サンセリフ
+  { g: '欧文・サンセリフ', k: 'sans',        n: 'Helvetica Neue',            f: '"Helvetica Neue",Arial', s: 'g' },
+  { g: '欧文・サンセリフ', k: 'futura',      n: 'Futura',                    f: 'Futura', s: 'g' },
+  { g: '欧文・サンセリフ', k: 'futura-cond', n: 'Avenir Next Condensed（縦長）', f: '"Avenir Next Condensed"', s: 'g' },
+  { g: '欧文・サンセリフ', k: 'avenir',      n: 'Avenir Next',               f: '"Avenir Next",Avenir', s: 'g' },
+  { g: '欧文・サンセリフ', k: 'optima',      n: 'Optima',                    f: 'Optima', s: 'g' },
+  { g: '欧文・サンセリフ', k: 'gill',        n: 'Gill Sans',                 f: '"Gill Sans"', s: 'g' },
+  { g: '欧文・サンセリフ', k: 'impact',      n: 'Impact（極太）',            f: 'Impact', s: 'g' },
+  // 欧文・セリフ
+  { g: '欧文・セリフ', k: 'serif',       n: 'Georgia',             f: 'Georgia,"Times New Roman"', s: 'm' },
+  { g: '欧文・セリフ', k: 'didot',       n: 'Didot',               f: 'Didot', s: 'm' },
+  { g: '欧文・セリフ', k: 'bodoni',      n: 'Bodoni 72',           f: '"Bodoni 72"', s: 'm' },
+  { g: '欧文・セリフ', k: 'baskerville', n: 'Baskerville',         f: 'Baskerville', s: 'm' },
+  { g: '欧文・セリフ', k: 'hoefler',     n: 'Hoefler Text',        f: '"Hoefler Text"', s: 'm' },
+  { g: '欧文・セリフ', k: 'copperplate', n: 'Copperplate',         f: 'Copperplate', s: 'm' },
+  // 欧文・その他
+  { g: '欧文・その他', k: 'american', n: 'American Typewriter',  f: '"American Typewriter"', s: 'm' },
+  { g: '欧文・その他', k: 'rockwell', n: 'Rockwell',             f: 'Rockwell', s: 'm' },
+  { g: '欧文・その他', k: 'mono',     n: 'Menlo（等幅）',        f: 'Menlo,"Courier New"', s: 'g' },
+  { g: '欧文・その他', k: 'script',   n: 'Snell Roundhand（筆記体）', f: '"Snell Roundhand"', s: 'm' },
+];
+
+const FONT_STACK = Object.fromEntries(
+  FONTS.map(x => [x.k, x.f + ',' + (x.s === 'm' ? JP_M : JP_G)]));
+const FONT_LABEL = Object.fromEntries(FONTS.map(x => [x.k, x.n]));
+const FONT_KEYS = FONTS.map(x => x.k);
 
 /* 本の情報で選んだ書体を、その差し込み文字に当てる。
    版面側が -bold なら太さは保つ。 */
@@ -750,8 +783,10 @@ function withChosenFont(ts, content) {
 const _measure = document.createElement('canvas').getContext('2d');
 
 function fontSpec(ts, sizePx) {
-  const bold = String(ts.font || '').includes('bold') ? '700 ' : '';
-  return `${bold}${sizePx}px ${FONT_STACK[ts.font] || FONT_STACK.sans}`;
+  const name = String(ts.font || 'sans');
+  const bold = name.endsWith('-bold');
+  const base = bold ? name.slice(0, -5) : name;
+  return `${bold ? '700 ' : ''}${sizePx}px ${FONT_STACK[base] || FONT_STACK.sans}`;
 }
 
 /* 折り返し。renderText と行数の事前計算で同じ結果になるよう1箇所にまとめる */
@@ -1092,9 +1127,13 @@ function effSize(field) {
 
 function fontSelect(field) {
   const cur = CFG['font_' + field];
-  return `<select onchange="setBookInfo('font_${field}',this.value)" class="fontSel">
-    ${FONT_KEYS.map(k => `<option value="${k}" ${k === cur ? 'selected' : ''}>${FONT_LABEL[k]}</option>`).join('')}
-  </select>`;
+  let html = '', group = '';
+  for (const x of FONTS) {
+    if (x.g !== group) { if (group) html += '</optgroup>'; html += `<optgroup label="${x.g}">`; group = x.g; }
+    html += `<option value="${x.k}" ${x.k === cur ? 'selected' : ''}
+      style="font-family:${x.f.replace(/"/g, "'")}">${x.n}</option>`;
+  }
+  return `<select onchange="setBookInfo('font_${field}',this.value,true)" class="fontSel">${html}</optgroup></select>`;
 }
 
 function styleRow(field) {
