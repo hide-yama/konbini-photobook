@@ -285,24 +285,13 @@
         {
           "content": "{subtitle}",
           "x": 18,
-          "y": 268,
+          "y": 261.0,
           "w": 174,
           "size": 9.5,
           "font": "sans",
           "align": "left",
           "color": "#ffffff",
           "leading": 14
-        },
-        {
-          "content": "{credit}",
-          "x": 18,
-          "y": 284,
-          "w": 174,
-          "size": 8,
-          "font": "sans",
-          "align": "left",
-          "color": "#ffffff",
-          "leading": 12
         }
       ],
       "nombre": false
@@ -337,24 +326,13 @@
         {
           "content": "{subtitle}",
           "x": 42,
-          "y": 204,
+          "y": 194.5,
           "w": 126,
           "size": 8.5,
           "font": "sans",
           "align": "left",
           "color": "#8a8a8a",
           "leading": 13
-        },
-        {
-          "content": "{credit}",
-          "x": 18,
-          "y": 284,
-          "w": 174,
-          "size": 8,
-          "font": "sans",
-          "align": "left",
-          "color": "#8a8a8a",
-          "leading": 12
         }
       ],
       "nombre": false
@@ -1145,24 +1123,13 @@
         {
           "content": "{subtitle}",
           "x": 20,
-          "y": 184,
+          "y": 177.0,
           "w": 257,
           "size": 9.5,
           "font": "sans",
           "align": "left",
           "color": "#ffffff",
           "leading": 14
-        },
-        {
-          "content": "{credit}",
-          "x": 20,
-          "y": 198,
-          "w": 257,
-          "size": 8,
-          "font": "sans",
-          "align": "left",
-          "color": "#ffffff",
-          "leading": 12
         }
       ],
       "nombre": false
@@ -1197,24 +1164,13 @@
         {
           "content": "{subtitle}",
           "x": 74,
-          "y": 165,
+          "y": 157.5,
           "w": 149,
           "size": 8.5,
           "font": "sans",
           "align": "left",
           "color": "#8a8a8a",
           "leading": 13
-        },
-        {
-          "content": "{credit}",
-          "x": 20,
-          "y": 198,
-          "w": 257,
-          "size": 8,
-          "font": "sans",
-          "align": "left",
-          "color": "#8a8a8a",
-          "leading": 12
         }
       ],
       "nombre": false
