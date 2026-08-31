@@ -270,21 +270,45 @@ function pageTexts(pg, t, pageNo) {
     }
   }
   for (let ts of list) {
+    const raw = String(ts.content || '');
+    ts = withChosenFont(ts, raw);
     const pdeg = pageRotation(pg);
     if (pdeg && !ts.rotate) ts = { ...ts, rotate: (360 - pdeg) % 360 };
-    let s = String(ts.content || '');
+    let s = raw;
     for (const k in vals) s = s.split('{' + k + '}').join(vals[k]);
     if (s.trim()) out.push({ ...ts, text: s });
   }
   return out;
 }
 
+/* 4書体。欧文の2つも末尾に日本語フォントを積んであるので、
+   日本語が混ざっても字が出ないことはない（欧文字だけ欧文書体になる）。 */
+const JP_MINCHO = '"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif';
+const JP_GOTHIC = '"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif';
 const FONT_STACK = {
-  serif: '"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif',
-  'serif-bold': '"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif',
-  sans: '"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif',
-  'sans-bold': '"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif',
+  mincho: JP_MINCHO,          'mincho-bold': JP_MINCHO,
+  gothic: JP_GOTHIC,          'gothic-bold': JP_GOTHIC,
+  serif: 'Georgia,"Times New Roman",' + JP_MINCHO,
+  'serif-bold': 'Georgia,"Times New Roman",' + JP_MINCHO,
+  sans: '"Helvetica Neue",Arial,' + JP_GOTHIC,
+  'sans-bold': '"Helvetica Neue",Arial,' + JP_GOTHIC,
 };
+const FONT_LABEL = { mincho: '明朝体', gothic: 'ゴシック体',
+                     serif: 'セリフ体（欧文）', sans: 'サンセリフ体（欧文）' };
+const FONT_KEYS = ['mincho', 'gothic', 'serif', 'sans'];
+
+/* 本の情報で選んだ書体を、その差し込み文字に当てる。
+   版面側が -bold なら太さは保つ。 */
+function withChosenFont(ts, content) {
+  for (const k of ['title', 'subtitle', 'credit']) {
+    if (!content.includes('{' + k + '}')) continue;
+    const choice = CFG['font_' + k];
+    if (!choice || !FONT_STACK[choice]) return ts;
+    const bold = String(ts.font || '').endsWith('-bold');
+    return { ...ts, font: choice + (bold ? '-bold' : '') };
+  }
+  return ts;
+}
 
 /** テキストを透過キャンバスに描く（回転込み）。PDFにはPNGとして貼る */
 function renderText(ts, pxPerMm) {
@@ -527,7 +551,8 @@ function drawPreview() {
 /* ═══════════ 本の情報（タイトルなど） ═══════════ */
 
 const INFO_KEY = 'photobook.bookinfo';
-const INFO_FIELDS = ['title', 'subtitle', 'credit'];
+const INFO_FIELDS = ['title', 'subtitle', 'credit',
+                     'font_title', 'font_subtitle', 'font_credit'];
 
 function loadBookInfo() {
   try {
@@ -557,20 +582,27 @@ function setBookInfo(k, v) {
   }, 250);
 }
 
+function fontSelect(field) {
+  const cur = CFG['font_' + field];
+  return `<select onchange="setBookInfo('font_${field}',this.value)" class="fontSel">
+    ${FONT_KEYS.map(k => `<option value="${k}" ${k === cur ? 'selected' : ''}>${FONT_LABEL[k]}</option>`).join('')}
+  </select>`;
+}
+
 function bookInfoFields() {
-  return `
-    <div class="field"><label>タイトル</label>
-      <input type="text" value="${esc(CFG.title || '')}" placeholder="写真集タイトル"
-        oninput="setBookInfo('title',this.value)"></div>
-    <div class="field"><label>サブタイトル</label>
-      <input type="text" value="${esc(CFG.subtitle || '')}" placeholder="2026"
-        oninput="setBookInfo('subtitle',this.value)"></div>
-    <div class="field"><label>クレジット</label>
-      <input type="text" value="${esc(CFG.credit || '')}" placeholder="photo by …"
-        oninput="setBookInfo('credit',this.value)"></div>
-    <p class="hint">表紙の <code>{title}</code> <code>{subtitle}</code>、
-      裏表紙の <code>{credit}</code> に入ります。この3つはブラウザに保存され、
-      次に開いたときも残ります。</p>`;
+  const row = (field, label, ph, val) => `
+    <div class="field"><label>${label}</label>
+      <input type="text" value="${esc(val || '')}" placeholder="${ph}"
+        oninput="setBookInfo('${field}',this.value)">
+      ${fontSelect(field)}</div>`;
+  return row('title', 'タイトル', '写真集タイトル', CFG.title)
+    + row('subtitle', 'サブタイトル', '2026', CFG.subtitle)
+    + row('credit', 'クレジット', 'photo by …', CFG.credit)
+    + `<p class="hint">表紙の <code>{title}</code> <code>{subtitle}</code>、
+        裏表紙の <code>{credit}</code> に入ります。書体は
+        <b>明朝体・ゴシック体</b>が日本語向け、<b>セリフ体・サンセリフ体</b>が欧文向けです
+        （欧文を選んでも日本語は表示されます）。
+        この設定はブラウザに保存され、次に開いたときも残ります。</p>`;
 }
 
 /* ═══════════ 選択モード ═══════════ */

@@ -227,3 +227,6 @@ body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
 /* 枠のサムネイルをタップして写真を選ぶ */
 .slot img.pick{cursor:pointer}
 .slot img.pick:hover{outline:2px solid var(--accent);outline-offset:1px}
+
+/* 本の情報：入力欄の下に書体セレクタを並べる */
+.field .fontSel{margin-top:5px;width:100%;font-size:11px;padding:3px 7px}
