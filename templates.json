@@ -295,7 +295,8 @@
           "leading": 19.6
         }
       ],
-      "nombre": false
+      "nombre": false,
+      "cover_block": true
     },
     "cover-quiet": {
       "label": "表紙・小さな写真と大きな余白（静かな表紙）",
@@ -337,7 +338,8 @@
           "leading": 18.2
         }
       ],
-      "nombre": false
+      "nombre": false,
+      "cover_block": true
     },
     "back-cover": {
       "label": "裏表紙・クレジットのみ",
@@ -1135,7 +1137,8 @@
           "leading": 19.6
         }
       ],
-      "nombre": false
+      "nombre": false,
+      "cover_block": true
     },
     "cover-quiet": {
       "label": "表紙・小さな写真と大きな余白（静かな表紙）",
@@ -1177,7 +1180,8 @@
           "leading": 18.2
         }
       ],
-      "nombre": false
+      "nombre": false,
+      "cover_block": true
     },
     "back-cover": {
       "label": "裏表紙・クレジットのみ",
@@ -1306,5 +1310,6 @@
   "_orientation": "縦(portrait)は templates / 横(landscape)は templates_landscape を使う。app.js の ORIENT 表が対応づけている。",
   "_nombre": "nombre:false のページにはノンブルを振らない。表紙・裏表紙・白ページ。コード側で名前を直書きしない。",
   "_fonts": "テキストの font は mincho（明朝）/ gothic（ゴシック）/ serif（欧文セリフ）/ sans（欧文サンセリフ）と、それぞれの -bold。実体は app.js の FONT_STACK。欧文の2つも末尾に日本語フォントを積んであるので、日本語が混ざっても字が出ないことはない。",
-  "_anchor": "テキストの anchor:\"bottom\" は、行が増えたときに上へ伸ばす指定。表紙のタイトルのように、下にサブタイトルが控えている場合に使う。"
+  "_anchor": "テキストの anchor:\"bottom\" は、行が増えたときに上へ伸ばす指定。表紙のタイトルのように、下にサブタイトルが控えている場合に使う。",
+  "_cover_block": "cover_block:true の版面は、タイトルとサブタイトルの位置・大きさ・色を app.js の coverBlockSpecs() が計算して置き直す。版面側の x/y/size/color は「設定が未指定のときの既定値」として残っている。"
 }

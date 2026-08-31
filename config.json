@@ -3,6 +3,8 @@
   "title": "写真集タイトル",
   "subtitle": "2026",
   "credit": "photo by Hideki Yamamoto",
+  "cover_pos": "bl",
+  "_cover_pos_note": "表紙のタイトル＋サブタイトルを置く隅。tl=左上 / tr=右上 / bl=左下 / br=右下。大きさと色は画面で選ぶと size_title / color_title などに保存される（未設定なら版面の既定）。",
   "font_title": "mincho",
   "font_subtitle": "sans",
   "font_credit": "sans",

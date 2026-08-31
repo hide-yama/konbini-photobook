@@ -231,3 +231,13 @@ body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
 
 /* 本の情報：入力欄の下に書体セレクタを並べる */
 .field .fontSel{margin-top:5px;width:100%;font-size:11px;padding:3px 7px}
+
+/* 本の情報：書体・大きさ・色を1行に */
+.styleRow{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap}
+.styleRow .fontSel{margin-top:0;flex:1 1 100%}
+.styleRow .u{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--dim)}
+.styleRow input.sz{width:56px;padding:3px 6px;font-size:11px}
+.styleRow input[type=color]{width:30px;height:24px;padding:1px;border:1px solid var(--line);
+  border-radius:5px;background:#fff;cursor:pointer}
+.posGrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.posGrid button{padding:7px 0;font-size:11px}

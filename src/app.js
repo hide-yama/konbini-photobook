@@ -244,6 +244,60 @@ function gutterShift(t, pageNo) {
   return ORIENT_NAME === 'landscape' ? { dx: 0, dy: d } : { dx: d, dy: 0 };
 }
 
+/* ═══════════ 表紙の文字ブロック ═══════════
+   タイトルとサブタイトルはひと組として四隅のどこかに置く。
+   版面の座標ではなくページの寸法から計算するので、冊子サイズや向きが変わっても追従する。 */
+
+const COVER_POS = { tl: '左上', tr: '右上', bl: '左下', br: '右下' };
+const GAP_RATIO = 0.6;          // タイトル字高に対する、サブタイトルまでのベースライン間隔
+                                // （以前は1.2。半分に詰めた）
+
+/** ページ端からの余白（mm）。A4縦の18mmを基準に、辺の長さで比例させる */
+const coverMargin = () => ({ x: PW * (18 / 210), y: PH * (18 / 297) });
+
+/** タイトル／サブタイトルの位置・大きさ・色を、いまの設定から決めて上書きする。
+    ti, su は版面側の定義（既定値として使う）。 */
+function coverBlockSpecs(ti, su, titleText) {
+  const pos = COVER_POS[CFG.cover_pos] ? CFG.cover_pos : 'bl';
+  const toRight = pos[1] === 'r', toTop = pos[0] === 't';
+  const m = coverMargin();
+  const w = PW - m.x * 2;
+  const align = toRight ? 'right' : 'left';
+  const PT = 25.4 / 72;
+
+  const tiSize = +CFG.size_title || ti.size;
+  const suSize = su ? (+CFG.size_subtitle || su.size) : 0;
+  const tiLead = tiSize * 1.3, suLead = suSize * 1.4;      // 行送りは字送りから決める
+  const gap = tiSize * PT * GAP_RATIO;                     // ベースライン間（mm）
+
+  const out = { ...ti, x: m.x, w, align, size: tiSize, leading: tiLead,
+                color: CFG.color_title || ti.color };
+  let sub = null;
+
+  if (toTop) {
+    /* 上寄せ：タイトルは下へ伸ばし、サブタイトルはその下に付いていく */
+    out.anchor = 'top';
+    out.y = m.y + tiSize * PT;
+    if (su) {
+      const n = countLines({ ...out, text: titleText || 'あ' }, titleText || 'あ');
+      sub = { ...su, x: m.x, w, align, size: suSize, leading: suLead,
+              color: CFG.color_subtitle || su.color,
+              y: out.y + (n - 1) * tiLead * PT + gap };
+    }
+  } else {
+    /* 下寄せ：サブタイトルを下端に固定し、タイトルは上へ伸ばす */
+    out.anchor = 'bottom';
+    if (su) {
+      sub = { ...su, x: m.x, w, align, size: suSize, leading: suLead,
+              color: CFG.color_subtitle || su.color, y: PH - m.y };
+      out.y = sub.y - gap;
+    } else {
+      out.y = PH - m.y;
+    }
+  }
+  return { title: out, subtitle: sub };
+}
+
 /* この版面が使っている差し込み文字（title / subtitle / credit）を拾う */
 const TEXT_FIELDS = ['title', 'subtitle', 'credit'];
 const TEXT_LABEL = { title: 'タイトル', subtitle: 'サブタイトル', credit: 'クレジット' };
@@ -263,7 +317,18 @@ function pageTexts(pg, t, pageNo) {
     caption: pg.caption || '', caption2: pg.caption2 || '', pageno: String(pageNo),
   };
   const out = [];
-  const list = [...(t.texts || [])];
+  let list = [...(t.texts || [])];
+
+  /* 表紙は、版面の座標ではなく設定（四隅・大きさ・色）で置き直す */
+  if (t.cover_block) {
+    const ti = list.find(x => String(x.content).includes('{title}'));
+    const su = list.find(x => String(x.content).includes('{subtitle}'));
+    if (ti) {
+      const spec = coverBlockSpecs(withChosenFont(ti, ti.content), su && withChosenFont(su, su.content),
+                                   vals.title);
+      list = list.map(x => (x === ti ? spec.title : (x === su && spec.subtitle ? spec.subtitle : x)));
+    }
+  }
   if (CFG.page_numbers && pageNo >= (CFG.page_number_start || 3) && t.nombre !== false) {
     const sm = CFG.safe_margin_mm || 7;
     const k = PH / ORIENT[ORIENT_NAME].design[1], far = isFarPage(pageNo);
@@ -319,23 +384,40 @@ function withChosenFont(ts, content) {
 }
 
 /** テキストを透過キャンバスに描く（回転込み）。PDFにはPNGとして貼る */
-function renderText(ts, pxPerMm) {
-  const sizePx = ts.size * (25.4 / 72) * pxPerMm;
-  const lead = (ts.leading || ts.size * 1.5) * (25.4 / 72) * pxPerMm;
-  const wPx = (ts.w || 60) * pxPerMm;
+const _measure = document.createElement('canvas').getContext('2d');
+
+function fontSpec(ts, sizePx) {
   const bold = String(ts.font || '').includes('bold') ? '700 ' : '';
-  const font = `${bold}${sizePx}px ${FONT_STACK[ts.font] || FONT_STACK.sans}`;
-  const m = document.createElement('canvas').getContext('2d');
-  m.font = font;
+  return `${bold}${sizePx}px ${FONT_STACK[ts.font] || FONT_STACK.sans}`;
+}
+
+/* 折り返し。renderText と行数の事前計算で同じ結果になるよう1箇所にまとめる */
+function wrapText(text, font, wPx) {
+  _measure.font = font;
   const lines = [];
-  for (const para of ts.text.split('\n')) {
+  for (const para of String(text).split('\n')) {
     let cur = '';
     for (const ch of para) {
-      if (m.measureText(cur + ch).width > wPx && cur) { lines.push(cur); cur = ch; }
+      if (_measure.measureText(cur + ch).width > wPx && cur) { lines.push(cur); cur = ch; }
       else cur += ch;
     }
     lines.push(cur);
   }
+  return lines;
+}
+
+/** 描かずに行数だけ知りたいとき。倍率によらず同じ数になるので固定倍率で測る */
+function countLines(ts, text) {
+  const S = 4;
+  return wrapText(text, fontSpec(ts, ts.size * (25.4 / 72) * S), (ts.w || 60) * S).length;
+}
+
+function renderText(ts, pxPerMm) {
+  const sizePx = ts.size * (25.4 / 72) * pxPerMm;
+  const lead = (ts.leading || ts.size * 1.5) * (25.4 / 72) * pxPerMm;
+  const wPx = (ts.w || 60) * pxPerMm;
+  const font = fontSpec(ts, sizePx);
+  const lines = wrapText(ts.text, font, wPx);
   const bw = Math.ceil(wPx) + 4, bh = Math.ceil(lead * (lines.length - 1) + sizePx * 1.45) + 4;
   const c = document.createElement('canvas');
   c.width = Math.max(1, bw); c.height = Math.max(1, bh);
@@ -562,7 +644,9 @@ function drawPreview() {
 
 const INFO_KEY = 'photobook.bookinfo';
 const INFO_FIELDS = ['title', 'subtitle', 'credit',
-                     'font_title', 'font_subtitle', 'font_credit'];
+                     'font_title', 'font_subtitle', 'font_credit',
+                     'cover_pos', 'size_title', 'size_subtitle',
+                     'color_title', 'color_subtitle'];
 
 function loadBookInfo() {
   try {
@@ -580,16 +664,42 @@ function saveBookInfo() {
 
 /* 入力のたびに renderIns() をやり直すと入力欄からフォーカスが外れるので、
    絵の描き直しだけを遅らせて行う */
-function setBookInfo(k, v) {
+function setBookInfo(k, v, immediate) {
   CFG[k] = v;
   saveBookInfo();
   clearTimeout(setBookInfo._t);
+  if (immediate) { renderIns(); renderGrid(); drawPreview(); return; }
   setBookInfo._t = setTimeout(() => {
     renderGrid();
     const p = $('#insPrev');
     if (p && S.sel >= 0) drawPage(p, S.pages[S.sel], S.sel + 1, 2.6);
     drawPreview();
   }, 250);
+}
+
+/* 画面のどこからでも色を吸える（写真からも）。Chrome/Edge の EyeDropper API。 */
+async function pickColor(field) {
+  if (!window.EyeDropper) { toast('このブラウザはスポイトに対応していません'); return; }
+  try {
+    const { sRGBHex } = await new EyeDropper().open();
+    setBookInfo(field, sRGBHex, true);
+  } catch (e) { /* Escでキャンセルされただけ */ }
+}
+
+/** いま実際に使われている色（未設定なら版面の既定）を返す */
+function effColor(field) {
+  if (CFG['color_' + field]) return CFG['color_' + field];
+  const t = T[CFG.cover_template || 'cover'] || {};
+  const x = (t.texts || []).find(v => String(v.content).includes('{' + field + '}'));
+  return (x && x.color) || '#ffffff';
+}
+
+/** いま実際に使われている文字サイズ（未設定なら版面の既定） */
+function effSize(field) {
+  if (+CFG['size_' + field]) return +CFG['size_' + field];
+  const t = T[CFG.cover_template || 'cover'] || {};
+  const x = (t.texts || []).find(v => String(v.content).includes('{' + field + '}'));
+  return x ? Math.round(x.size * 10) / 10 : 12;
 }
 
 function fontSelect(field) {
@@ -599,24 +709,45 @@ function fontSelect(field) {
   </select>`;
 }
 
+function styleRow(field) {
+  return `<div class="styleRow">
+    ${fontSelect(field)}
+    <label class="u">大きさ<input type="number" class="sz" min="6" max="120" step="0.5"
+      value="${effSize(field)}" onchange="setBookInfo('size_${field}',+this.value,true)"></label>
+    <label class="u">色<input type="color" value="${effColor(field)}"
+      oninput="setBookInfo('color_${field}',this.value,true)"></label>
+    <button class="tiny" onclick="pickColor('color_${field}')" title="画面から色を吸う（写真からも）">スポイト</button>
+  </div>`;
+}
+
+function posPicker() {
+  return `<div class="field"><label>表紙の文字の位置</label>
+    <div class="posGrid">
+      ${['tl','tr','bl','br'].map(k => `<button class="${CFG.cover_pos === k ? 'on' : ''}"
+        onclick="setBookInfo('cover_pos','${k}',true)">${COVER_POS[k]}</button>`).join('')}
+    </div></div>`;
+}
+
 function bookInfoFields() {
-  const row = (field, label, ph, val, multi) => `
+  const row = (field, label, ph, val, multi, style) => `
     <div class="field"><label>${label}</label>
       ${multi
         ? `<textarea rows="2" placeholder="${ph}"
              oninput="setBookInfo('${field}',this.value)">${esc(val || '')}</textarea>`
         : `<input type="text" value="${esc(val || '')}" placeholder="${ph}"
              oninput="setBookInfo('${field}',this.value)">`}
-      ${fontSelect(field)}</div>`;
-  return row('title', 'タイトル', '写真集タイトル\n（改行できます）', CFG.title, true)
-    + row('subtitle', 'サブタイトル', '2026', CFG.subtitle)
+      ${style ? styleRow(field) : fontSelect(field)}</div>`;
+  return row('title', 'タイトル', '写真集タイトル\n（改行できます）', CFG.title, true, true)
+    + row('subtitle', 'サブタイトル', '2026', CFG.subtitle, false, true)
+    + posPicker()
     + row('credit', 'クレジット', 'photo by …', CFG.credit)
     + `<p class="hint">表紙の <code>{title}</code> <code>{subtitle}</code>、
         裏表紙の <code>{credit}</code> に入ります。書体は
         <b>明朝体・ゴシック体</b>が日本語向け、<b>セリフ体・サンセリフ体</b>が欧文向けです
         （欧文を選んでも日本語は表示されます）。
         タイトルは<b>改行できます</b>。長いときは枠幅で自動的にも折り返します。
-        行が増えると上へ伸びるので、サブタイトルに重なりません。
+        タイトルとサブタイトルはひと組で四隅に置けます。色は<b>スポイト</b>で
+        写真から吸えます（Chrome / Edge）。
         この設定はブラウザに保存され、次に開いたときも残ります。</p>`;
 }
 

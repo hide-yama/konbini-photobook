@@ -237,6 +237,16 @@ body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
 
 /* 本の情報：入力欄の下に書体セレクタを並べる */
 .field .fontSel{margin-top:5px;width:100%;font-size:11px;padding:3px 7px}
+
+/* 本の情報：書体・大きさ・色を1行に */
+.styleRow{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap}
+.styleRow .fontSel{margin-top:0;flex:1 1 100%}
+.styleRow .u{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--dim)}
+.styleRow input.sz{width:56px;padding:3px 6px;font-size:11px}
+.styleRow input[type=color]{width:30px;height:24px;padding:1px;border:1px solid var(--line);
+  border-radius:5px;background:#fff;cursor:pointer}
+.posGrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.posGrid button{padding:7px 0;font-size:11px}
 </style>
 </head>
 <body>
@@ -328,8 +338,8 @@ body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
 
 <input type="file" id="filePick" multiple accept="image/*" style="display:none">
 
-<script id="cfg-data" type="application/json">{"title": "写真集タイトル", "subtitle": "2026", "credit": "photo by Hideki Yamamoto", "font_title": "mincho", "font_subtitle": "sans", "font_credit": "sans", "plan_mode": "fill", "orientation": "portrait", "book": "B5", "safe_margin_mm": 7, "gutter_mm": 6, "image_dpi": 300, "jpeg_quality": 95, "delivery": "usb", "page_numbers": true, "page_number_start": 3, "binding": "left", "cover_template": "cover", "rotate_degrees": 90}</script>
-<script id="tpl-data" type="application/json">{"templates": {"portrait-fill": {"label": "① 縦写真・ページいっぱい", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 200, "h": 287, "fit": "cover"}], "texts": []}, "landscape-wide": {"label": "② 横写真・上下中央・幅いっぱい", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 82, "w": 200, "h": 133, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 5, "y": 225, "w": 200, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "portrait-one": {"label": "③ 縦写真1枚・標準余白", "slots": 1, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 26, "y": 30, "w": 158, "h": 237, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 26, "y": 277, "w": 158, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "landscape-one": {"label": "④ 横写真1枚・標準余白", "slots": 1, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 20, "y": 92, "w": 170, "h": 113, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 20, "y": 214, "w": 170, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "landscape-duo": {"label": "⑤ 横写真2枚・上下", "slots": 2, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 20, "y": 27, "w": 170, "h": 113, "fit": "contain"}, {"slot": 1, "x": 20, "y": 158, "w": 170, "h": 113, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 20, "y": 148, "w": 170, "size": 7, "font": "gothic", "align": "left", "color": "#9a9a9a", "leading": 10}, {"content": "{caption2}", "x": 20, "y": 279, "w": 170, "size": 7, "font": "gothic", "align": "left", "color": "#9a9a9a", "leading": 10}]}, "rot-fill": {"label": "⑥ 横写真を縦に回転・ページいっぱい", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 200, "h": 287, "fit": "cover", "rotate": "auto-ccw"}], "texts": []}, "rot-one": {"label": "⑦ 横写真を縦に回転・標準余白", "slots": 1, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 26, "y": 24, "w": 158, "h": 237, "fit": "contain", "rotate": "auto-ccw"}], "texts": [{"content": "{caption}", "x": 196, "y": 275, "w": 150, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11, "rotate": 90}]}, "portrait-duo": {"label": "⑧ 縦写真2枚・横並び", "slots": 2, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 12, "y": 78, "w": 90, "h": 135, "fit": "contain"}, {"slot": 1, "x": 108, "y": 78, "w": 90, "h": 135, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 12, "y": 221, "w": 90, "size": 7, "font": "gothic", "align": "left", "color": "#9a9a9a", "leading": 10}, {"content": "{caption2}", "x": 108, "y": 221, "w": 90, "size": 7, "font": "gothic", "align": "left", "color": "#9a9a9a", "leading": 10}]}, "cover": {"label": "表紙・全面写真＋白抜きタイトル", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 200, "h": 287, "fit": "cover"}], "texts": [{"content": "{title}", "x": 18, "y": 250, "w": 174, "size": 36.4, "font": "mincho-bold", "align": "left", "color": "#ffffff", "leading": 47.6, "anchor": "bottom"}, {"content": "{subtitle}", "x": 18, "y": 265.4, "w": 174, "size": 13.3, "font": "sans", "align": "left", "color": "#ffffff", "leading": 19.6}], "nombre": false}, "cover-quiet": {"label": "表紙・小さな写真と大きな余白（静かな表紙）", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 42, "y": 46, "w": 126, "h": 94, "fit": "contain"}], "texts": [{"content": "{title}", "x": 42, "y": 186, "w": 126, "size": 26.6, "font": "mincho", "align": "left", "color": "#1a1a1a", "leading": 37.8, "anchor": "bottom"}, {"content": "{subtitle}", "x": 42, "y": 197.9, "w": 126, "size": 11.9, "font": "sans", "align": "left", "color": "#8a8a8a", "leading": 18.2}], "nombre": false}, "back-cover": {"label": "裏表紙・クレジットのみ", "slots": 0, "page_side": "any", "gutter": false, "images": [], "texts": [{"content": "{credit}", "x": 10, "y": 274, "w": 190, "size": 7.5, "font": "sans", "align": "right", "color": "#a0a0a0", "leading": 11}], "nombre": false}, "text": {"label": "テキストのみ（扉・あとがき）", "slots": 0, "page_side": "any", "gutter": true, "images": [], "texts": [{"content": "{caption}", "x": 30, "y": 76, "w": 150, "size": 10, "font": "mincho", "align": "left", "color": "#222222", "leading": 21}]}, "blank": {"label": "白ページ（ページ数調整用）", "slots": 0, "page_side": "any", "gutter": true, "images": [], "texts": [], "nombre": false}, "spread-L": {"label": "［応用］見開き全面・左half（次ページに spread-R を置く）", "slots": 1, "page_side": "even", "gutter": false, "pair": "spread-R", "images": [{"slot": 0, "x": 5, "y": 5, "w": 205, "h": 287, "fit": "cover", "src_crop": [0, 0, 0.5, 1]}], "texts": []}, "spread-R": {"label": "［応用］見開き全面・右half（前ページの spread-L と対）", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 0, "y": 5, "w": 205, "h": 287, "fit": "cover", "src_crop": [0.5, 0, 1, 1]}], "texts": []}, "spread-band-L": {"label": "［応用］見開き・横長の帯（上下に大きな余白）左half", "slots": 1, "page_side": "even", "gutter": false, "pair": "spread-band-R", "images": [{"slot": 0, "x": 5, "y": 96, "w": 205, "h": 112, "fit": "cover", "src_crop": [0, 0, 0.5, 1]}], "texts": []}, "spread-band-R": {"label": "［応用］見開き・横長の帯 右half", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 0, "y": 96, "w": 205, "h": 112, "fit": "cover", "src_crop": [0.5, 0, 1, 1]}], "texts": [{"content": "{caption}", "x": 130, "y": 218, "w": 75, "size": 7.5, "font": "gothic", "align": "right", "color": "#8a8a8a", "leading": 11}]}, "edge-out-R": {"label": "［応用］横写真を小口(右)寄せ・天寄り。ノド側に大きな余白", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 47, "y": 38, "w": 158, "h": 105, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 47, "y": 154, "w": 158, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "edge-out-L": {"label": "［応用］横写真を小口(左)寄せ・天寄り", "slots": 1, "page_side": "even", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 38, "w": 158, "h": 105, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 5, "y": 154, "w": 158, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "low-wide-R": {"label": "［応用］横写真を地寄せ・小口(右)寄せ。天に大きな余白", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 47, "y": 168, "w": 158, "h": 105, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 47, "y": 284, "w": 158, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "low-wide-L": {"label": "［応用］横写真を地寄せ・小口(左)寄せ", "slots": 1, "page_side": "even", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 168, "w": 158, "h": 105, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 5, "y": 284, "w": 158, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "tall-out-R": {"label": "［応用］縦写真を小口(右)寄せ・天地大きく", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 72, "y": 22, "w": 133, "h": 200, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 72, "y": 233, "w": 133, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "tall-out-L": {"label": "［応用］縦写真を小口(左)寄せ・天地大きく", "slots": 1, "page_side": "even", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 22, "w": 133, "h": 200, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 5, "y": 233, "w": 133, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "quiet-R": {"label": "［応用］小さな写真ひとつ・地寄せ／余白で読ませる（右ページ）", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 118, "y": 186, "w": 87, "h": 58, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 118, "y": 255, "w": 87, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 12}]}, "quiet-L": {"label": "［応用］小さな写真ひとつ・地寄せ／余白で読ませる（左ページ）", "slots": 1, "page_side": "even", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 186, "w": 87, "h": 58, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 5, "y": 255, "w": 87, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 12}]}, "duo-offset-R": {"label": "［応用］大小2点を段違いに（右ページ）", "slots": 2, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 47, "y": 30, "w": 132, "h": 88, "fit": "cover"}, {"slot": 1, "x": 120, "y": 150, "w": 85, "h": 106, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 47, "y": 129, "w": 100, "size": 7, "font": "gothic", "align": "left", "color": "#9a9a9a", "leading": 10}]}, "duo-offset-L": {"label": "［応用］大小2点を段違いに（左ページ）", "slots": 2, "page_side": "even", "gutter": false, "images": [{"slot": 0, "x": 31, "y": 30, "w": 132, "h": 88, "fit": "cover"}, {"slot": 1, "x": 5, "y": 150, "w": 85, "h": 106, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 63, "y": 129, "w": 100, "size": 7, "font": "gothic", "align": "right", "color": "#9a9a9a", "leading": 10}]}, "triptych": {"label": "［応用］横写真3点を縦に積む（細い帯のリズム）", "slots": 3, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 28, "y": 42, "w": 154, "h": 51, "fit": "cover"}, {"slot": 1, "x": 28, "y": 105, "w": 154, "h": 51, "fit": "cover"}, {"slot": 2, "x": 28, "y": 168, "w": 154, "h": 51, "fit": "cover"}], "texts": []}, "grid-4": {"label": "［応用］4点グリッド（記録的に見せたいとき）", "slots": 4, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 14, "y": 68, "w": 88, "h": 59, "fit": "cover"}, {"slot": 1, "x": 108, "y": 68, "w": 88, "h": 59, "fit": "cover"}, {"slot": 2, "x": 14, "y": 133, "w": 88, "h": 59, "fit": "cover"}, {"slot": 3, "x": 108, "y": 133, "w": 88, "h": 59, "fit": "cover"}], "texts": []}, "full-page": {"label": "［応用］1ページ全面（印字可能領域いっぱい）", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 200, "h": 287, "fit": "cover"}], "texts": []}, "back-cover-fill": {"label": "裏表紙・全面写真＋白抜きクレジット", "slots": 1, "page_side": "any", "gutter": false, "nombre": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 200, "h": 287, "fit": "cover"}], "texts": [{"content": "{credit}", "x": 18, "y": 272, "w": 174, "size": 8.5, "font": "sans", "align": "left", "color": "#ffffff", "leading": 13}]}, "back-cover-photo": {"label": "裏表紙・小さな写真＋クレジット", "slots": 1, "page_side": "any", "gutter": false, "nombre": false, "images": [{"slot": 0, "x": 55, "y": 84, "w": 100, "h": 100, "fit": "cover"}], "texts": [{"content": "{credit}", "x": 30, "y": 214, "w": 150, "size": 8, "font": "sans", "align": "center", "color": "#8a8a8a", "leading": 13}]}}, "templates_landscape": {"land-fill": {"label": "① 写真・ページいっぱい", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 287, "h": 200, "fit": "cover"}], "texts": []}, "land-one": {"label": "② 写真1枚・標準余白", "slots": 1, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 24, "y": 18, "w": 249, "h": 150, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 24, "y": 190, "w": 249, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "land-wide": {"label": "③ 写真・幅いっぱい（上下に余白）", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 40, "w": 287, "h": 130, "fit": "cover"}], "texts": []}, "land-duo": {"label": "④ 写真2枚・横並び", "slots": 2, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 24, "y": 32, "w": 120, "h": 140, "fit": "cover"}, {"slot": 1, "x": 153, "y": 32, "w": 120, "h": 140, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 24, "y": 186, "w": 120, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}, {"content": "{caption2}", "x": 153, "y": 186, "w": 120, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "land-tall": {"label": "⑤ 縦写真1枚・中央", "slots": 1, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 88, "y": 14, "w": 121, "h": 182, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 88, "y": 206, "w": 121, "size": 7.5, "font": "gothic", "align": "center", "color": "#8a8a8a", "leading": 11}]}, "cover": {"label": "表紙・全面写真＋白抜きタイトル", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 287, "h": 200, "fit": "cover"}], "texts": [{"content": "{title}", "x": 20, "y": 166, "w": 257, "size": 36.4, "font": "mincho-bold", "align": "left", "color": "#ffffff", "leading": 47.6, "anchor": "bottom"}, {"content": "{subtitle}", "x": 20, "y": 181.4, "w": 257, "size": 13.3, "font": "sans", "align": "left", "color": "#ffffff", "leading": 19.6}], "nombre": false}, "cover-quiet": {"label": "表紙・小さな写真と大きな余白（静かな表紙）", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 74, "y": 26, "w": 149, "h": 100, "fit": "cover"}], "texts": [{"content": "{title}", "x": 74, "y": 150, "w": 149, "size": 23.8, "font": "mincho-bold", "align": "left", "color": "#222222", "leading": 33.6, "anchor": "bottom"}, {"content": "{subtitle}", "x": 74, "y": 160.5, "w": 149, "size": 11.9, "font": "sans", "align": "left", "color": "#8a8a8a", "leading": 18.2}], "nombre": false}, "back-cover": {"label": "裏表紙・クレジットのみ", "slots": 0, "page_side": "any", "gutter": false, "images": [], "texts": [{"content": "{credit}", "x": 24, "y": 192, "w": 249, "size": 8, "font": "sans", "align": "center", "color": "#8a8a8a", "leading": 13}], "nombre": false}, "text": {"label": "テキストのみ（扉・あとがき）", "slots": 0, "page_side": "any", "gutter": true, "images": [], "texts": [{"content": "{caption}", "x": 44, "y": 60, "w": 209, "size": 10, "font": "mincho", "align": "left", "color": "#222222", "leading": 21}]}, "blank": {"label": "白ページ（ページ数調整用）", "slots": 0, "page_side": "any", "gutter": true, "images": [], "texts": [], "nombre": false}, "back-cover-fill": {"label": "裏表紙・全面写真＋白抜きクレジット", "slots": 1, "page_side": "any", "gutter": false, "nombre": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 287, "h": 200, "fit": "cover"}], "texts": [{"content": "{credit}", "x": 20, "y": 190, "w": 257, "size": 8.5, "font": "sans", "align": "left", "color": "#ffffff", "leading": 13}]}, "back-cover-photo": {"label": "裏表紙・小さな写真＋クレジット", "slots": 1, "page_side": "any", "gutter": false, "nombre": false, "images": [{"slot": 0, "x": 99, "y": 38, "w": 99, "h": 90, "fit": "cover"}], "texts": [{"content": "{credit}", "x": 44, "y": 160, "w": 209, "size": 8, "font": "sans", "align": "center", "color": "#8a8a8a", "leading": 13}]}}, "rotate_pairs": {"landscape-one": "portrait-one", "landscape-wide": "portrait-fill", "landscape-duo": "portrait-duo", "landscape-full": "portrait-full"}, "rotate_pairs_landscape": {"land-tall": "land-one"}}</script>
+<script id="cfg-data" type="application/json">{"title": "写真集タイトル", "subtitle": "2026", "credit": "photo by Hideki Yamamoto", "cover_pos": "bl", "font_title": "mincho", "font_subtitle": "sans", "font_credit": "sans", "plan_mode": "fill", "orientation": "portrait", "book": "B5", "safe_margin_mm": 7, "gutter_mm": 6, "image_dpi": 300, "jpeg_quality": 95, "delivery": "usb", "page_numbers": true, "page_number_start": 3, "binding": "left", "cover_template": "cover", "rotate_degrees": 90}</script>
+<script id="tpl-data" type="application/json">{"templates": {"portrait-fill": {"label": "① 縦写真・ページいっぱい", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 200, "h": 287, "fit": "cover"}], "texts": []}, "landscape-wide": {"label": "② 横写真・上下中央・幅いっぱい", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 82, "w": 200, "h": 133, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 5, "y": 225, "w": 200, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "portrait-one": {"label": "③ 縦写真1枚・標準余白", "slots": 1, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 26, "y": 30, "w": 158, "h": 237, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 26, "y": 277, "w": 158, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "landscape-one": {"label": "④ 横写真1枚・標準余白", "slots": 1, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 20, "y": 92, "w": 170, "h": 113, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 20, "y": 214, "w": 170, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "landscape-duo": {"label": "⑤ 横写真2枚・上下", "slots": 2, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 20, "y": 27, "w": 170, "h": 113, "fit": "contain"}, {"slot": 1, "x": 20, "y": 158, "w": 170, "h": 113, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 20, "y": 148, "w": 170, "size": 7, "font": "gothic", "align": "left", "color": "#9a9a9a", "leading": 10}, {"content": "{caption2}", "x": 20, "y": 279, "w": 170, "size": 7, "font": "gothic", "align": "left", "color": "#9a9a9a", "leading": 10}]}, "rot-fill": {"label": "⑥ 横写真を縦に回転・ページいっぱい", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 200, "h": 287, "fit": "cover", "rotate": "auto-ccw"}], "texts": []}, "rot-one": {"label": "⑦ 横写真を縦に回転・標準余白", "slots": 1, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 26, "y": 24, "w": 158, "h": 237, "fit": "contain", "rotate": "auto-ccw"}], "texts": [{"content": "{caption}", "x": 196, "y": 275, "w": 150, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11, "rotate": 90}]}, "portrait-duo": {"label": "⑧ 縦写真2枚・横並び", "slots": 2, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 12, "y": 78, "w": 90, "h": 135, "fit": "contain"}, {"slot": 1, "x": 108, "y": 78, "w": 90, "h": 135, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 12, "y": 221, "w": 90, "size": 7, "font": "gothic", "align": "left", "color": "#9a9a9a", "leading": 10}, {"content": "{caption2}", "x": 108, "y": 221, "w": 90, "size": 7, "font": "gothic", "align": "left", "color": "#9a9a9a", "leading": 10}]}, "cover": {"label": "表紙・全面写真＋白抜きタイトル", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 200, "h": 287, "fit": "cover"}], "texts": [{"content": "{title}", "x": 18, "y": 250, "w": 174, "size": 36.4, "font": "mincho-bold", "align": "left", "color": "#ffffff", "leading": 47.6, "anchor": "bottom"}, {"content": "{subtitle}", "x": 18, "y": 265.4, "w": 174, "size": 13.3, "font": "sans", "align": "left", "color": "#ffffff", "leading": 19.6}], "nombre": false, "cover_block": true}, "cover-quiet": {"label": "表紙・小さな写真と大きな余白（静かな表紙）", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 42, "y": 46, "w": 126, "h": 94, "fit": "contain"}], "texts": [{"content": "{title}", "x": 42, "y": 186, "w": 126, "size": 26.6, "font": "mincho", "align": "left", "color": "#1a1a1a", "leading": 37.8, "anchor": "bottom"}, {"content": "{subtitle}", "x": 42, "y": 197.9, "w": 126, "size": 11.9, "font": "sans", "align": "left", "color": "#8a8a8a", "leading": 18.2}], "nombre": false, "cover_block": true}, "back-cover": {"label": "裏表紙・クレジットのみ", "slots": 0, "page_side": "any", "gutter": false, "images": [], "texts": [{"content": "{credit}", "x": 10, "y": 274, "w": 190, "size": 7.5, "font": "sans", "align": "right", "color": "#a0a0a0", "leading": 11}], "nombre": false}, "text": {"label": "テキストのみ（扉・あとがき）", "slots": 0, "page_side": "any", "gutter": true, "images": [], "texts": [{"content": "{caption}", "x": 30, "y": 76, "w": 150, "size": 10, "font": "mincho", "align": "left", "color": "#222222", "leading": 21}]}, "blank": {"label": "白ページ（ページ数調整用）", "slots": 0, "page_side": "any", "gutter": true, "images": [], "texts": [], "nombre": false}, "spread-L": {"label": "［応用］見開き全面・左half（次ページに spread-R を置く）", "slots": 1, "page_side": "even", "gutter": false, "pair": "spread-R", "images": [{"slot": 0, "x": 5, "y": 5, "w": 205, "h": 287, "fit": "cover", "src_crop": [0, 0, 0.5, 1]}], "texts": []}, "spread-R": {"label": "［応用］見開き全面・右half（前ページの spread-L と対）", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 0, "y": 5, "w": 205, "h": 287, "fit": "cover", "src_crop": [0.5, 0, 1, 1]}], "texts": []}, "spread-band-L": {"label": "［応用］見開き・横長の帯（上下に大きな余白）左half", "slots": 1, "page_side": "even", "gutter": false, "pair": "spread-band-R", "images": [{"slot": 0, "x": 5, "y": 96, "w": 205, "h": 112, "fit": "cover", "src_crop": [0, 0, 0.5, 1]}], "texts": []}, "spread-band-R": {"label": "［応用］見開き・横長の帯 右half", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 0, "y": 96, "w": 205, "h": 112, "fit": "cover", "src_crop": [0.5, 0, 1, 1]}], "texts": [{"content": "{caption}", "x": 130, "y": 218, "w": 75, "size": 7.5, "font": "gothic", "align": "right", "color": "#8a8a8a", "leading": 11}]}, "edge-out-R": {"label": "［応用］横写真を小口(右)寄せ・天寄り。ノド側に大きな余白", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 47, "y": 38, "w": 158, "h": 105, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 47, "y": 154, "w": 158, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "edge-out-L": {"label": "［応用］横写真を小口(左)寄せ・天寄り", "slots": 1, "page_side": "even", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 38, "w": 158, "h": 105, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 5, "y": 154, "w": 158, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "low-wide-R": {"label": "［応用］横写真を地寄せ・小口(右)寄せ。天に大きな余白", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 47, "y": 168, "w": 158, "h": 105, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 47, "y": 284, "w": 158, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "low-wide-L": {"label": "［応用］横写真を地寄せ・小口(左)寄せ", "slots": 1, "page_side": "even", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 168, "w": 158, "h": 105, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 5, "y": 284, "w": 158, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "tall-out-R": {"label": "［応用］縦写真を小口(右)寄せ・天地大きく", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 72, "y": 22, "w": 133, "h": 200, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 72, "y": 233, "w": 133, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "tall-out-L": {"label": "［応用］縦写真を小口(左)寄せ・天地大きく", "slots": 1, "page_side": "even", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 22, "w": 133, "h": 200, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 5, "y": 233, "w": 133, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "quiet-R": {"label": "［応用］小さな写真ひとつ・地寄せ／余白で読ませる（右ページ）", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 118, "y": 186, "w": 87, "h": 58, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 118, "y": 255, "w": 87, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 12}]}, "quiet-L": {"label": "［応用］小さな写真ひとつ・地寄せ／余白で読ませる（左ページ）", "slots": 1, "page_side": "even", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 186, "w": 87, "h": 58, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 5, "y": 255, "w": 87, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 12}]}, "duo-offset-R": {"label": "［応用］大小2点を段違いに（右ページ）", "slots": 2, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 47, "y": 30, "w": 132, "h": 88, "fit": "cover"}, {"slot": 1, "x": 120, "y": 150, "w": 85, "h": 106, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 47, "y": 129, "w": 100, "size": 7, "font": "gothic", "align": "left", "color": "#9a9a9a", "leading": 10}]}, "duo-offset-L": {"label": "［応用］大小2点を段違いに（左ページ）", "slots": 2, "page_side": "even", "gutter": false, "images": [{"slot": 0, "x": 31, "y": 30, "w": 132, "h": 88, "fit": "cover"}, {"slot": 1, "x": 5, "y": 150, "w": 85, "h": 106, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 63, "y": 129, "w": 100, "size": 7, "font": "gothic", "align": "right", "color": "#9a9a9a", "leading": 10}]}, "triptych": {"label": "［応用］横写真3点を縦に積む（細い帯のリズム）", "slots": 3, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 28, "y": 42, "w": 154, "h": 51, "fit": "cover"}, {"slot": 1, "x": 28, "y": 105, "w": 154, "h": 51, "fit": "cover"}, {"slot": 2, "x": 28, "y": 168, "w": 154, "h": 51, "fit": "cover"}], "texts": []}, "grid-4": {"label": "［応用］4点グリッド（記録的に見せたいとき）", "slots": 4, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 14, "y": 68, "w": 88, "h": 59, "fit": "cover"}, {"slot": 1, "x": 108, "y": 68, "w": 88, "h": 59, "fit": "cover"}, {"slot": 2, "x": 14, "y": 133, "w": 88, "h": 59, "fit": "cover"}, {"slot": 3, "x": 108, "y": 133, "w": 88, "h": 59, "fit": "cover"}], "texts": []}, "full-page": {"label": "［応用］1ページ全面（印字可能領域いっぱい）", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 200, "h": 287, "fit": "cover"}], "texts": []}, "back-cover-fill": {"label": "裏表紙・全面写真＋白抜きクレジット", "slots": 1, "page_side": "any", "gutter": false, "nombre": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 200, "h": 287, "fit": "cover"}], "texts": [{"content": "{credit}", "x": 18, "y": 272, "w": 174, "size": 8.5, "font": "sans", "align": "left", "color": "#ffffff", "leading": 13}]}, "back-cover-photo": {"label": "裏表紙・小さな写真＋クレジット", "slots": 1, "page_side": "any", "gutter": false, "nombre": false, "images": [{"slot": 0, "x": 55, "y": 84, "w": 100, "h": 100, "fit": "cover"}], "texts": [{"content": "{credit}", "x": 30, "y": 214, "w": 150, "size": 8, "font": "sans", "align": "center", "color": "#8a8a8a", "leading": 13}]}}, "templates_landscape": {"land-fill": {"label": "① 写真・ページいっぱい", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 287, "h": 200, "fit": "cover"}], "texts": []}, "land-one": {"label": "② 写真1枚・標準余白", "slots": 1, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 24, "y": 18, "w": 249, "h": 150, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 24, "y": 190, "w": 249, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "land-wide": {"label": "③ 写真・幅いっぱい（上下に余白）", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 40, "w": 287, "h": 130, "fit": "cover"}], "texts": []}, "land-duo": {"label": "④ 写真2枚・横並び", "slots": 2, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 24, "y": 32, "w": 120, "h": 140, "fit": "cover"}, {"slot": 1, "x": 153, "y": 32, "w": 120, "h": 140, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 24, "y": 186, "w": 120, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}, {"content": "{caption2}", "x": 153, "y": 186, "w": 120, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "land-tall": {"label": "⑤ 縦写真1枚・中央", "slots": 1, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 88, "y": 14, "w": 121, "h": 182, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 88, "y": 206, "w": 121, "size": 7.5, "font": "gothic", "align": "center", "color": "#8a8a8a", "leading": 11}]}, "cover": {"label": "表紙・全面写真＋白抜きタイトル", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 287, "h": 200, "fit": "cover"}], "texts": [{"content": "{title}", "x": 20, "y": 166, "w": 257, "size": 36.4, "font": "mincho-bold", "align": "left", "color": "#ffffff", "leading": 47.6, "anchor": "bottom"}, {"content": "{subtitle}", "x": 20, "y": 181.4, "w": 257, "size": 13.3, "font": "sans", "align": "left", "color": "#ffffff", "leading": 19.6}], "nombre": false, "cover_block": true}, "cover-quiet": {"label": "表紙・小さな写真と大きな余白（静かな表紙）", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 74, "y": 26, "w": 149, "h": 100, "fit": "cover"}], "texts": [{"content": "{title}", "x": 74, "y": 150, "w": 149, "size": 23.8, "font": "mincho-bold", "align": "left", "color": "#222222", "leading": 33.6, "anchor": "bottom"}, {"content": "{subtitle}", "x": 74, "y": 160.5, "w": 149, "size": 11.9, "font": "sans", "align": "left", "color": "#8a8a8a", "leading": 18.2}], "nombre": false, "cover_block": true}, "back-cover": {"label": "裏表紙・クレジットのみ", "slots": 0, "page_side": "any", "gutter": false, "images": [], "texts": [{"content": "{credit}", "x": 24, "y": 192, "w": 249, "size": 8, "font": "sans", "align": "center", "color": "#8a8a8a", "leading": 13}], "nombre": false}, "text": {"label": "テキストのみ（扉・あとがき）", "slots": 0, "page_side": "any", "gutter": true, "images": [], "texts": [{"content": "{caption}", "x": 44, "y": 60, "w": 209, "size": 10, "font": "mincho", "align": "left", "color": "#222222", "leading": 21}]}, "blank": {"label": "白ページ（ページ数調整用）", "slots": 0, "page_side": "any", "gutter": true, "images": [], "texts": [], "nombre": false}, "back-cover-fill": {"label": "裏表紙・全面写真＋白抜きクレジット", "slots": 1, "page_side": "any", "gutter": false, "nombre": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 287, "h": 200, "fit": "cover"}], "texts": [{"content": "{credit}", "x": 20, "y": 190, "w": 257, "size": 8.5, "font": "sans", "align": "left", "color": "#ffffff", "leading": 13}]}, "back-cover-photo": {"label": "裏表紙・小さな写真＋クレジット", "slots": 1, "page_side": "any", "gutter": false, "nombre": false, "images": [{"slot": 0, "x": 99, "y": 38, "w": 99, "h": 90, "fit": "cover"}], "texts": [{"content": "{credit}", "x": 44, "y": 160, "w": 209, "size": 8, "font": "sans", "align": "center", "color": "#8a8a8a", "leading": 13}]}}, "rotate_pairs": {"landscape-one": "portrait-one", "landscape-wide": "portrait-fill", "landscape-duo": "portrait-duo", "landscape-full": "portrait-full"}, "rotate_pairs_landscape": {"land-tall": "land-one"}}</script>
 <script>!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"function"==typeof define&&define.amd?define(["exports"],e):e((t=t||self).PDFLib={})}(this,(function(t){"use strict";
 /*! *****************************************************************************
     Copyright (c) Microsoft Corporation. All rights reserved.
@@ -593,6 +603,60 @@ function gutterShift(t, pageNo) {
   return ORIENT_NAME === 'landscape' ? { dx: 0, dy: d } : { dx: d, dy: 0 };
 }
 
+/* ═══════════ 表紙の文字ブロック ═══════════
+   タイトルとサブタイトルはひと組として四隅のどこかに置く。
+   版面の座標ではなくページの寸法から計算するので、冊子サイズや向きが変わっても追従する。 */
+
+const COVER_POS = { tl: '左上', tr: '右上', bl: '左下', br: '右下' };
+const GAP_RATIO = 0.6;          // タイトル字高に対する、サブタイトルまでのベースライン間隔
+                                // （以前は1.2。半分に詰めた）
+
+/** ページ端からの余白（mm）。A4縦の18mmを基準に、辺の長さで比例させる */
+const coverMargin = () => ({ x: PW * (18 / 210), y: PH * (18 / 297) });
+
+/** タイトル／サブタイトルの位置・大きさ・色を、いまの設定から決めて上書きする。
+    ti, su は版面側の定義（既定値として使う）。 */
+function coverBlockSpecs(ti, su, titleText) {
+  const pos = COVER_POS[CFG.cover_pos] ? CFG.cover_pos : 'bl';
+  const toRight = pos[1] === 'r', toTop = pos[0] === 't';
+  const m = coverMargin();
+  const w = PW - m.x * 2;
+  const align = toRight ? 'right' : 'left';
+  const PT = 25.4 / 72;
+
+  const tiSize = +CFG.size_title || ti.size;
+  const suSize = su ? (+CFG.size_subtitle || su.size) : 0;
+  const tiLead = tiSize * 1.3, suLead = suSize * 1.4;      // 行送りは字送りから決める
+  const gap = tiSize * PT * GAP_RATIO;                     // ベースライン間（mm）
+
+  const out = { ...ti, x: m.x, w, align, size: tiSize, leading: tiLead,
+                color: CFG.color_title || ti.color };
+  let sub = null;
+
+  if (toTop) {
+    /* 上寄せ：タイトルは下へ伸ばし、サブタイトルはその下に付いていく */
+    out.anchor = 'top';
+    out.y = m.y + tiSize * PT;
+    if (su) {
+      const n = countLines({ ...out, text: titleText || 'あ' }, titleText || 'あ');
+      sub = { ...su, x: m.x, w, align, size: suSize, leading: suLead,
+              color: CFG.color_subtitle || su.color,
+              y: out.y + (n - 1) * tiLead * PT + gap };
+    }
+  } else {
+    /* 下寄せ：サブタイトルを下端に固定し、タイトルは上へ伸ばす */
+    out.anchor = 'bottom';
+    if (su) {
+      sub = { ...su, x: m.x, w, align, size: suSize, leading: suLead,
+              color: CFG.color_subtitle || su.color, y: PH - m.y };
+      out.y = sub.y - gap;
+    } else {
+      out.y = PH - m.y;
+    }
+  }
+  return { title: out, subtitle: sub };
+}
+
 /* この版面が使っている差し込み文字（title / subtitle / credit）を拾う */
 const TEXT_FIELDS = ['title', 'subtitle', 'credit'];
 const TEXT_LABEL = { title: 'タイトル', subtitle: 'サブタイトル', credit: 'クレジット' };
@@ -612,7 +676,18 @@ function pageTexts(pg, t, pageNo) {
     caption: pg.caption || '', caption2: pg.caption2 || '', pageno: String(pageNo),
   };
   const out = [];
-  const list = [...(t.texts || [])];
+  let list = [...(t.texts || [])];
+
+  /* 表紙は、版面の座標ではなく設定（四隅・大きさ・色）で置き直す */
+  if (t.cover_block) {
+    const ti = list.find(x => String(x.content).includes('{title}'));
+    const su = list.find(x => String(x.content).includes('{subtitle}'));
+    if (ti) {
+      const spec = coverBlockSpecs(withChosenFont(ti, ti.content), su && withChosenFont(su, su.content),
+                                   vals.title);
+      list = list.map(x => (x === ti ? spec.title : (x === su && spec.subtitle ? spec.subtitle : x)));
+    }
+  }
   if (CFG.page_numbers && pageNo >= (CFG.page_number_start || 3) && t.nombre !== false) {
     const sm = CFG.safe_margin_mm || 7;
     const k = PH / ORIENT[ORIENT_NAME].design[1], far = isFarPage(pageNo);
@@ -668,23 +743,40 @@ function withChosenFont(ts, content) {
 }
 
 /** テキストを透過キャンバスに描く（回転込み）。PDFにはPNGとして貼る */
-function renderText(ts, pxPerMm) {
-  const sizePx = ts.size * (25.4 / 72) * pxPerMm;
-  const lead = (ts.leading || ts.size * 1.5) * (25.4 / 72) * pxPerMm;
-  const wPx = (ts.w || 60) * pxPerMm;
+const _measure = document.createElement('canvas').getContext('2d');
+
+function fontSpec(ts, sizePx) {
   const bold = String(ts.font || '').includes('bold') ? '700 ' : '';
-  const font = `${bold}${sizePx}px ${FONT_STACK[ts.font] || FONT_STACK.sans}`;
-  const m = document.createElement('canvas').getContext('2d');
-  m.font = font;
+  return `${bold}${sizePx}px ${FONT_STACK[ts.font] || FONT_STACK.sans}`;
+}
+
+/* 折り返し。renderText と行数の事前計算で同じ結果になるよう1箇所にまとめる */
+function wrapText(text, font, wPx) {
+  _measure.font = font;
   const lines = [];
-  for (const para of ts.text.split('\n')) {
+  for (const para of String(text).split('\n')) {
     let cur = '';
     for (const ch of para) {
-      if (m.measureText(cur + ch).width > wPx && cur) { lines.push(cur); cur = ch; }
+      if (_measure.measureText(cur + ch).width > wPx && cur) { lines.push(cur); cur = ch; }
       else cur += ch;
     }
     lines.push(cur);
   }
+  return lines;
+}
+
+/** 描かずに行数だけ知りたいとき。倍率によらず同じ数になるので固定倍率で測る */
+function countLines(ts, text) {
+  const S = 4;
+  return wrapText(text, fontSpec(ts, ts.size * (25.4 / 72) * S), (ts.w || 60) * S).length;
+}
+
+function renderText(ts, pxPerMm) {
+  const sizePx = ts.size * (25.4 / 72) * pxPerMm;
+  const lead = (ts.leading || ts.size * 1.5) * (25.4 / 72) * pxPerMm;
+  const wPx = (ts.w || 60) * pxPerMm;
+  const font = fontSpec(ts, sizePx);
+  const lines = wrapText(ts.text, font, wPx);
   const bw = Math.ceil(wPx) + 4, bh = Math.ceil(lead * (lines.length - 1) + sizePx * 1.45) + 4;
   const c = document.createElement('canvas');
   c.width = Math.max(1, bw); c.height = Math.max(1, bh);
@@ -911,7 +1003,9 @@ function drawPreview() {
 
 const INFO_KEY = 'photobook.bookinfo';
 const INFO_FIELDS = ['title', 'subtitle', 'credit',
-                     'font_title', 'font_subtitle', 'font_credit'];
+                     'font_title', 'font_subtitle', 'font_credit',
+                     'cover_pos', 'size_title', 'size_subtitle',
+                     'color_title', 'color_subtitle'];
 
 function loadBookInfo() {
   try {
@@ -929,16 +1023,42 @@ function saveBookInfo() {
 
 /* 入力のたびに renderIns() をやり直すと入力欄からフォーカスが外れるので、
    絵の描き直しだけを遅らせて行う */
-function setBookInfo(k, v) {
+function setBookInfo(k, v, immediate) {
   CFG[k] = v;
   saveBookInfo();
   clearTimeout(setBookInfo._t);
+  if (immediate) { renderIns(); renderGrid(); drawPreview(); return; }
   setBookInfo._t = setTimeout(() => {
     renderGrid();
     const p = $('#insPrev');
     if (p && S.sel >= 0) drawPage(p, S.pages[S.sel], S.sel + 1, 2.6);
     drawPreview();
   }, 250);
+}
+
+/* 画面のどこからでも色を吸える（写真からも）。Chrome/Edge の EyeDropper API。 */
+async function pickColor(field) {
+  if (!window.EyeDropper) { toast('このブラウザはスポイトに対応していません'); return; }
+  try {
+    const { sRGBHex } = await new EyeDropper().open();
+    setBookInfo(field, sRGBHex, true);
+  } catch (e) { /* Escでキャンセルされただけ */ }
+}
+
+/** いま実際に使われている色（未設定なら版面の既定）を返す */
+function effColor(field) {
+  if (CFG['color_' + field]) return CFG['color_' + field];
+  const t = T[CFG.cover_template || 'cover'] || {};
+  const x = (t.texts || []).find(v => String(v.content).includes('{' + field + '}'));
+  return (x && x.color) || '#ffffff';
+}
+
+/** いま実際に使われている文字サイズ（未設定なら版面の既定） */
+function effSize(field) {
+  if (+CFG['size_' + field]) return +CFG['size_' + field];
+  const t = T[CFG.cover_template || 'cover'] || {};
+  const x = (t.texts || []).find(v => String(v.content).includes('{' + field + '}'));
+  return x ? Math.round(x.size * 10) / 10 : 12;
 }
 
 function fontSelect(field) {
@@ -948,24 +1068,45 @@ function fontSelect(field) {
   </select>`;
 }
 
+function styleRow(field) {
+  return `<div class="styleRow">
+    ${fontSelect(field)}
+    <label class="u">大きさ<input type="number" class="sz" min="6" max="120" step="0.5"
+      value="${effSize(field)}" onchange="setBookInfo('size_${field}',+this.value,true)"></label>
+    <label class="u">色<input type="color" value="${effColor(field)}"
+      oninput="setBookInfo('color_${field}',this.value,true)"></label>
+    <button class="tiny" onclick="pickColor('color_${field}')" title="画面から色を吸う（写真からも）">スポイト</button>
+  </div>`;
+}
+
+function posPicker() {
+  return `<div class="field"><label>表紙の文字の位置</label>
+    <div class="posGrid">
+      ${['tl','tr','bl','br'].map(k => `<button class="${CFG.cover_pos === k ? 'on' : ''}"
+        onclick="setBookInfo('cover_pos','${k}',true)">${COVER_POS[k]}</button>`).join('')}
+    </div></div>`;
+}
+
 function bookInfoFields() {
-  const row = (field, label, ph, val, multi) => `
+  const row = (field, label, ph, val, multi, style) => `
     <div class="field"><label>${label}</label>
       ${multi
         ? `<textarea rows="2" placeholder="${ph}"
              oninput="setBookInfo('${field}',this.value)">${esc(val || '')}</textarea>`
         : `<input type="text" value="${esc(val || '')}" placeholder="${ph}"
              oninput="setBookInfo('${field}',this.value)">`}
-      ${fontSelect(field)}</div>`;
-  return row('title', 'タイトル', '写真集タイトル\n（改行できます）', CFG.title, true)
-    + row('subtitle', 'サブタイトル', '2026', CFG.subtitle)
+      ${style ? styleRow(field) : fontSelect(field)}</div>`;
+  return row('title', 'タイトル', '写真集タイトル\n（改行できます）', CFG.title, true, true)
+    + row('subtitle', 'サブタイトル', '2026', CFG.subtitle, false, true)
+    + posPicker()
     + row('credit', 'クレジット', 'photo by …', CFG.credit)
     + `<p class="hint">表紙の <code>{title}</code> <code>{subtitle}</code>、
         裏表紙の <code>{credit}</code> に入ります。書体は
         <b>明朝体・ゴシック体</b>が日本語向け、<b>セリフ体・サンセリフ体</b>が欧文向けです
         （欧文を選んでも日本語は表示されます）。
         タイトルは<b>改行できます</b>。長いときは枠幅で自動的にも折り返します。
-        行が増えると上へ伸びるので、サブタイトルに重なりません。
+        タイトルとサブタイトルはひと組で四隅に置けます。色は<b>スポイト</b>で
+        写真から吸えます（Chrome / Edge）。
         この設定はブラウザに保存され、次に開いたときも残ります。</p>`;
 }
 
