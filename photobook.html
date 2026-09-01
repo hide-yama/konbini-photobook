@@ -473,6 +473,7 @@ const S = {
   pickPages: false, markedPages: new Set(), lastMark: null,   // 台割の複数選択
   pickPhotos: false, markedPhotos: new Set(),                 // 写真トレイの複数選択
   prev: [], prevAt: 0,                                        // 見開きプレビュー
+  infoOpen: false,                                            // 「本の情報」を開いているか
 };
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -1135,19 +1136,38 @@ function saveBookInfo() {
   } catch (e) { /* 保存できなくても動作は続ける */ }
 }
 
-/* 入力のたびに renderIns() をやり直すと入力欄からフォーカスが外れるので、
-   絵の描き直しだけを遅らせて行う */
-function setBookInfo(k, v, immediate) {
+/** 絵だけ描き直す。右ペインの中身は作り直さない */
+function redrawPages() {
+  renderGrid();
+  const p = $('#insPrev');
+  if (p && S.sel >= 0) drawPage(p, S.pages[S.sel], S.sel + 1, 2.6);
+  drawPreview();
+}
+
+/* mode:
+     'now'     … すぐ描き直す。右ペインはそのまま（書体・大きさなど、
+                  操作した部品自身が新しい値を持っているもの）
+     'rebuild' … 右ペインを作り直す（帯のON/OFFのように、出る部品が変わるとき）
+     未指定    … 文字入力用。少し待ってから描き直す
+   右ペインを作り直すと、開いていたアコーディオンが閉じて操作が続けられなくなるので、
+   作り直しは本当に必要なときだけにする。 */
+function setBookInfo(k, v, mode) {
   CFG[k] = v;
   saveBookInfo();
   clearTimeout(setBookInfo._t);
-  if (immediate) { renderIns(); renderGrid(); drawPreview(); return; }
-  setBookInfo._t = setTimeout(() => {
-    renderGrid();
-    const p = $('#insPrev');
-    if (p && S.sel >= 0) drawPage(p, S.pages[S.sel], S.sel + 1, 2.6);
-    drawPreview();
-  }, 250);
+  if (mode === 'now') { redrawPages(); return; }
+  if (mode === 'rebuild') { renderIns(); redrawPages(); return; }
+  setBookInfo._t = setTimeout(redrawPages, 250);
+}
+
+/** 帯の濃さ。ラベルだけその場で書き換え、絵は少し間引いて描き直す */
+function setOpacity(v) {
+  CFG.band_opacity = +v;
+  saveBookInfo();
+  const l = $('#opLabel');
+  if (l) l.textContent = `濃さ ${v}%`;
+  clearTimeout(setOpacity._t);
+  setOpacity._t = setTimeout(redrawPages, 100);
 }
 
 /** "fff" や "FFFFFF" も受け取り、#ffffff の形にそろえる。途中入力なら null */
@@ -1208,7 +1228,7 @@ function fontSelect(field) {
     html += `<option value="${x.k}" ${x.k === cur ? 'selected' : ''}
       style="font-family:${x.f.replace(/"/g, "'")}">${x.n}</option>`;
   }
-  return `<select onchange="setBookInfo('font_${field}',this.value,true)" class="fontSel">${html}</optgroup></select>`;
+  return `<select onchange="setBookInfo('font_${field}',this.value,'now')" class="fontSel">${html}</optgroup></select>`;
 }
 
 function styleRow(field) {
@@ -1216,7 +1236,7 @@ function styleRow(field) {
   return `<div class="styleRow">
       ${fontSelect(field)}
       <input type="number" class="sz" min="6" max="120" step="0.5" title="文字の大きさ（pt）。空にすると版面の既定"
-        value="${effSize(field)}" onchange="setBookInfo('size_${field}',+this.value,true)"><span class="u">pt</span>
+        value="${effSize(field)}" oninput="setBookInfo('size_${field}',+this.value,'now')"><span class="u">pt</span>
     </div>
     <div class="styleRow">
       <input type="color" id="sw_color_${field}" value="${effColor(field)}" title="カラーパレット"
@@ -1233,7 +1253,7 @@ function bandPicker() {
   const on = !!CFG.band;
   return `<div class="field"><label>帯（座布団）</label>
     <label class="toggle"><input type="checkbox" ${on ? 'checked' : ''}
-      onchange="setBookInfo('band',this.checked,true)"><span>文字の下に帯を敷く</span></label>
+      onchange="setBookInfo('band',this.checked,'rebuild')"><span>文字の下に帯を敷く</span></label>
     ${on ? `<div class="styleRow">
       <input type="color" id="sw_band_color" value="${CFG.band_color || '#000000'}" title="帯の色"
         oninput="setColor('band_color',this.value,'sw')">
@@ -1244,8 +1264,8 @@ function bandPicker() {
     <div class="styleRow">
       <input type="range" min="0" max="100" step="5" class="op"
         value="${CFG.band_opacity == null ? 70 : CFG.band_opacity}"
-        oninput="setBookInfo('band_opacity',+this.value,true)">
-      <span class="u">濃さ ${CFG.band_opacity == null ? 70 : CFG.band_opacity}%</span>
+        oninput="setOpacity(this.value)">
+      <span class="u" id="opLabel">濃さ ${CFG.band_opacity == null ? 70 : CFG.band_opacity}%</span>
     </div>
     <p class="hint">選んだ隅のページ端から伸びて、文字を包みます。</p>` : ''}
   </div>`;
@@ -1255,7 +1275,7 @@ function posPicker() {
   return `<div class="field"><label>表紙の文字の位置</label>
     <div class="posGrid">
       ${['tl','tr','bl','br'].map(k => `<button class="${CFG.cover_pos === k ? 'on' : ''}"
-        onclick="setBookInfo('cover_pos','${k}',true)">${COVER_POS[k]}</button>`).join('')}
+        onclick="setBookInfo('cover_pos','${k}','rebuild')">${COVER_POS[k]}</button>`).join('')}
     </div></div>`;
 }
 
@@ -1619,7 +1639,15 @@ function renderGrid() {
   };
 }
 
+/* 作り直しても、アコーディオンの開閉とスクロール位置は保つ */
 function renderIns() {
+  const el = $('#ins');
+  const top = el ? el.scrollTop : 0;
+  buildIns();
+  if (el) el.scrollTop = top;
+}
+
+function buildIns() {
   const el = $('#ins'), i = S.sel;
 
   if (S.pickPages) {
@@ -1715,7 +1743,8 @@ function renderIns() {
       <button onclick="insBlank()">白ページを後ろに</button>
       <button onclick="delPage()">このページを削除</button>
     </div>
-    <details class="info"><summary>本の情報（タイトル・クレジット）</summary>
+    <details class="info" ${S.infoOpen ? 'open' : ''} ontoggle="S.infoOpen = this.open">
+      <summary>本の情報（タイトル・クレジット）</summary>
       ${bookInfoFields()}</details>`;
   drawPage($('#insPrev'), pg, i + 1, 2.6);
 }
@@ -1740,7 +1769,7 @@ function setShowText(k, show) {
   const set = new Set(pg.hide || []);
   show ? set.delete(k) : set.add(k);
   if (set.size) pg.hide = [...set]; else delete pg.hide;
-  renderIns(); touch(false);
+  touch(false);                       // チェックボックスは自分で状態を持つので作り直さない
 }
 /* 90°/270° では紙面に対して写真の縦横が入れ替わるので、版面も対になっている
    縦向きのものへ差し替える。0°/180° では向きが変わらないので元に戻す。 */
