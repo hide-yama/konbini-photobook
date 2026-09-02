@@ -105,7 +105,6 @@ const S = {
   pickPages: false, markedPages: new Set(), lastMark: null,   // 台割の複数選択
   pickPhotos: false, markedPhotos: new Set(),                 // 写真トレイの複数選択
   prev: [], prevAt: 0,                                        // 見開きプレビュー
-  infoOpen: false,                                            // 「本の情報」を開いているか
   picker: null,                                               // 写真を選ぶ一覧を開いている枠
 };
 const $ = s => document.querySelector(s);
@@ -996,7 +995,7 @@ function setBookInfo(k, v, mode) {
   saveBookInfo();
   clearTimeout(setBookInfo._t);
   if (mode === 'now') { redrawPages(); return; }
-  if (mode === 'rebuild') { renderIns(); redrawPages(); return; }
+  if (mode === 'rebuild') { rebuildBookInfo(); redrawPages(); return; }
   setBookInfo._t = setTimeout(redrawPages, 250);
 }
 
@@ -1117,6 +1116,29 @@ function posPicker() {
       ${['tl','tr','bl','br'].map(k => `<button class="${CFG.cover_pos === k ? 'on' : ''}"
         onclick="setBookInfo('cover_pos','${k}','rebuild')">${COVER_POS[k]}</button>`).join('')}
     </div></div>`;
+}
+
+function openBookInfo() {
+  rebuildBookInfo(true);
+  $('#bookModal').classList.add('on');
+  addEventListener('keydown', bookKeys);
+}
+
+function closeBookInfo() {
+  $('#bookModal').classList.remove('on');
+  removeEventListener('keydown', bookKeys);
+}
+
+function bookKeys(e) { if (e.key === 'Escape') closeBookInfo(); }
+
+/** ダイアログの中身を作り直す。開いていないときは何もしない */
+function rebuildBookInfo(force) {
+  const b = $('#bookBody');
+  if (!b) return;
+  if (!force && !$('#bookModal').classList.contains('on')) return;
+  const top = b.scrollTop;
+  b.innerHTML = bookInfoFields();
+  b.scrollTop = top;
 }
 
 function bookInfoFields() {
@@ -1490,9 +1512,10 @@ function buildIns() {
   }
 
   if (i < 0 || i >= S.pages.length) {
-    el.innerHTML = `<h2>本の情報</h2>${bookInfoFields()}
-      <p class="hint" style="margin-top:18px">中央のページをクリックすると、
-        ここで版面を変えられます。</p>`;
+    el.innerHTML = `<div class="empty">ページを選ぶと<br>ここで版面や写真を変えられます</div>
+      <div class="row" style="justify-content:center">
+        <button onclick="openBookInfo()">本の情報をひらく</button>
+      </div>`;
     return;
   }
   const pg = S.pages[i], t = T[pg.template] || { slots: 0 };
@@ -1590,9 +1613,7 @@ function buildIns() {
       <button onclick="insBlank()">白ページを後ろに</button>
       <button onclick="delPage()">このページを削除</button>
     </div>
-    <details class="info" ${S.infoOpen ? 'open' : ''} ontoggle="S.infoOpen = this.open">
-      <summary>本の情報（タイトル・クレジット）</summary>
-      ${bookInfoFields()}</details>`;
+`;
   drawPage($('#insPrev'), pg, i + 1, 2.6);
   bindCropDrag($('#insPrev'), i);
 }

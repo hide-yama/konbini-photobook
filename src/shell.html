@@ -24,6 +24,7 @@
       <option value="B5">B5冊子</option>
       <option value="A4">A4冊子</option>
     </select>
+    <button onclick="openBookInfo()" title="タイトル・サブタイトル・クレジットと、表紙の文字の見た目">本の情報</button>
   </div>
   <span id="progress" style="display:none"></span>
   <span class="spacer"></span>
@@ -97,6 +98,14 @@
       <span class="tip">← → でめくる ／ Esc で閉じる ／ 表紙と裏表紙は単独で表示されます</span>
     </div>
     <button id="prevNext" onclick="previewGo(1)" title="次へ（→）">次 ▶</button>
+  </div>
+</div>
+
+<div id="bookModal" onclick="if(event.target===this)closeBookInfo()">
+  <div class="sheet">
+    <header><h1>本の情報</h1><span class="spacer"></span>
+      <button onclick="closeBookInfo()" title="閉じる（Esc）">閉じる</button></header>
+    <div class="body" id="bookBody"></div>
   </div>
 </div>
 
