@@ -1,7 +1,9 @@
 {
   "_comment": "冊子全体の設定。数値の単位は mm。",
   "title": "写真集タイトル",
-  "subtitle": "2026",
+  "subtitle": "",
+  "subtitle_today": true,
+  "_subtitle_note": "subtitle_today が true なら、まだ一度も編集していないときに限り、起動時のサブタイトルへ今日の日付（YYYY.MM.DD）が入る。編集するとブラウザに保存され、以降はそれが優先。固定の文言にしたいときは subtitle_today を false にして subtitle に書く。",
   "credit": "photo by Hideki Yamamoto",
   "cover_pos": "bl",
   "_cover_pos_note": "表紙のタイトル＋サブタイトルを置く隅。tl=左上 / tr=右上 / bl=左下 / br=右下。大きさと色は画面で選ぶと size_title / color_title などに保存される（未設定なら版面の既定）。",

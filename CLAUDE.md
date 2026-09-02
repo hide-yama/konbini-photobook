@@ -270,6 +270,12 @@ open photobook.html
   （`openPreview()` で付けて `closePreview()` で外す対）。
 - **本の情報の入力で `renderIns()` を呼ばない。** 呼ぶと入力欄が作り直されて
   フォーカスが飛ぶ。`setBookInfo()` は絵の描き直しだけを250ms遅らせて行う。
+- **サブタイトルの初期値は今日の日付**（`todayText()`）。入れるのは
+  **保存に `subtitle` のキーが無いとき**だけ。空文字で保存されていれば空のまま尊重する。
+  何か1つ編集すれば全項目が保存されるので、そこで日付は固定される。
+  固定の文言にしたいときは `config.json` の `subtitle_today` を false に。
+- **`saveBookInfo()` は `??` を使う。** `||` だと `band: false` や `band_opacity: 0` が
+  空文字になって型が壊れる。
 - **タイトル類は localStorage に置く**（`INFO_KEY`）。`file://` やプライベート
   ウィンドウでは読み書きが例外を投げるので、必ず try/catch で囲む。
   写真と台割は保存しない（容量的に無理）。

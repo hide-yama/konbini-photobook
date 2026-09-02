@@ -890,19 +890,32 @@ const INFO_FIELDS = ['title', 'subtitle', 'credit',
                      'color_title', 'color_subtitle',
                      'band', 'band_color', 'band_opacity'];
 
+/** 今日の日付。サブタイトルの出発点に使う。書き換えれば以降はそれが残る */
+function todayText() {
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
+}
+
 function loadBookInfo() {
+  let j = null;
   try {
-    const j = JSON.parse(localStorage.getItem(INFO_KEY) || 'null');
+    j = JSON.parse(localStorage.getItem(INFO_KEY) || 'null');
     /* 数値や真偽値も入るので、型で弾かない（以前は文字列だけ拾っていて
        文字サイズが保存されていなかった） */
     if (j) for (const k of INFO_FIELDS) if (j[k] !== undefined && j[k] !== null) CFG[k] = j[k];
   } catch (e) { /* file:// やプライベートウィンドウでは使えないことがある */ }
+  /* まだ一度も触っていなければ、今日の日付を入れておく。
+     何か1つでも編集すれば全項目が保存され、そこで日付は固定される。 */
+  if (CFG.subtitle_today !== false && (!j || j.subtitle === undefined)) {
+    CFG.subtitle = todayText();
+  }
 }
 
 function saveBookInfo() {
   try {
+    /* ?? にすること。|| だと false や 0 が空文字になって型が壊れる */
     localStorage.setItem(INFO_KEY,
-      JSON.stringify(Object.fromEntries(INFO_FIELDS.map(k => [k, CFG[k] || '']))));
+      JSON.stringify(Object.fromEntries(INFO_FIELDS.map(k => [k, CFG[k] ?? '']))));
   } catch (e) { /* 保存できなくても動作は続ける */ }
 }
 
@@ -1059,7 +1072,7 @@ function bookInfoFields() {
              oninput="setBookInfo('${field}',this.value)">`}
       ${style ? styleRow(field) : fontSelect(field)}</div>`;
   return row('title', 'タイトル', '写真集タイトル\n（改行できます）', CFG.title, true, true)
-    + row('subtitle', 'サブタイトル', '2026', CFG.subtitle, false, true)
+    + row('subtitle', 'サブタイトル', todayText(), CFG.subtitle, false, true)
     + posPicker()
     + bandPicker()
     + row('credit', 'クレジット', 'photo by …', CFG.credit)

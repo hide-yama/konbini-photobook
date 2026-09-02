@@ -113,6 +113,9 @@ Python も pip も要りません。PDF生成ライブラリも中に入って�
 | 欧文・セリフ | Georgia / Didot / Bodoni 72 / Baskerville / Hoefler Text / Copperplate |
 | 欧文・その他 | American Typewriter / Rockwell / Menlo（等幅）/ Snell Roundhand（筆記体） |
 
+サブタイトルには、はじめ**今日の日付**（`2026.09.02` の形）が入っています。
+そこから好きな文言に書き換えてください。一度でも編集すれば、その内容が保存されます。
+
 既定は **タイトル＝ヒラギノ明朝／サブタイトル・クレジット＝Helvetica Neue** です。
 サブタイトルとクレジットは日付や名前になりやすいので欧文にしてあります。
 
@@ -369,6 +372,7 @@ Python も pip も要りません。PDF生成ライブラリも中に入って�
 | `image_dpi` / `jpeg_quality` | 画質。300dpi/95＝最高値（画面には出していません） |
 | `delivery` | 入稿経路。`usb`（無制限・既定）/ `app`（30MB）/ `netprint`（10MB）。画面には出していません |
 | `book` | 仕上がりの冊子サイズ。`B5`（用紙B4・既定）/ `A4`（用紙A3） |
+| `subtitle_today` | `true`（既定）で、未編集のときサブタイトルに今日の日付を入れる |
 | `plan_mode` | 自動台割の組み方。`fill`（既定）/ `portrait` / `simple` |
 | `orientation` | ページの向き。`portrait`=縦（左とじ）/ `landscape`=横（上とじ） |
 | `cover_pos` | 表紙の文字の位置。`tl` / `tr` / `bl`（既定）/ `br` |
