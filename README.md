@@ -35,6 +35,9 @@ Python も pip も要りません。PDF生成ライブラリも中に入って�
 | 店頭で選ぶ用紙 | A3 | A3 |
 | 使う版面 | `templates.json` の `templates` | `templates_landscape` |
 
+裏表紙の既定は「**小さな写真＋クレジット**」です（`config.json` の
+`back_cover_template`）。表紙と重ならないよう、最後の写真を裏表紙に取り分けます。
+
 **横ページのときは、裏表紙が上下逆に組まれます。**上とじは横の折り目なので、
 表紙と裏表紙は1枚の紙の同じ面にあり、折ると裏表紙側の半分が180°回ります。
 あらかじめ逆さに組んでおくことで、閉じた本を裏返したときに表紙と天地が揃います。
@@ -134,7 +137,7 @@ Python も pip も要りません。PDF生成ライブラリも中に入って�
 サブタイトルには、はじめ**今日の日付**（`2026.09.02` の形）が入っています。
 そこから好きな文言に書き換えてください。一度でも編集すれば、その内容が保存されます。
 
-既定は **タイトル＝ヒラギノ明朝／サブタイトル・クレジット＝Helvetica Neue** です。
+既定は3つとも **Futura** です。
 サブタイトルとクレジットは日付や名前になりやすいので欧文にしてあります。
 
 **これらはmacOSに入っているフォントを使っています。**外部から読み込まないので
@@ -405,6 +408,7 @@ Python も pip も要りません。PDF生成ライブラリも中に入って�
 | `font_title` / `font_subtitle` / `font_credit` | 既定の書体。`mincho` / `gothic` / `serif` / `sans` |
 | `page_numbers` | ノンブルの有無。表紙・裏表紙・白ページには入りません |
 | `cover_template` | `cover` / `cover-quiet` |
+| `back_cover_template` | `back-cover-photo`（既定）/ `back-cover` / `back-cover-fill` |
 | `rotate_degrees` | 自動で回すときの角度。`90`（既定）/ `270` |
 
 ### `templates.json` — 版面

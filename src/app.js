@@ -610,6 +610,11 @@ function drawPage(cv, pg, pageNo, pxPerMm) {
   const t = T[pg.template];
   if (!t) { x.fillStyle = '#c00'; x.font = `${14 * pxPerMm / 3}px sans-serif`;
             x.fillText('不明な版面: ' + pg.template, 10, 24); return; }
+  /* このページを上下逆に刷る指定。要素の中身だけでなく、置く位置ごと回す。
+     中身だけ回すと、紙をひっくり返したときに上下の並びが入れ替わってしまう
+     （写真の下にあったはずの文字が上に来る）。 */
+  if (pg.flip) { x.translate(cv.width, cv.height); x.rotate(Math.PI); }
+
   const { dx, dy } = gutterShift(t, pageNo);
   const list = pg.photos || [];
 
@@ -764,6 +769,9 @@ function autoPlan(mode) {
   const pages = [{ template: CFG.cover_template || 'cover', photos: [ph[0].name] },
                  { template: 'blank' }];
   const q = ph.slice(1);
+  /* 裏表紙にも写真を1枚使う。表紙と重ならないよう、最後の1枚を取り分ける
+     （枚数が少ないときは表紙と同じ写真を使う） */
+  const backName = (ph.length >= 3) ? q.pop().name : ph[0].name;
   if (mode === 'duo') {
     /* 2枚ずつ、隙間なく接する版面に置く。写真が1枚余ったら全面1枚に。
        版面(T)は向きごとに切り替わっているので、縦横どちらでもこの1本で足りる */
@@ -826,8 +834,10 @@ function autoPlan(mode) {
   /* 横ページ（上とじ）は、表紙と裏表紙が1枚の紙の同じ面にあり、横の折り目で折ると
      裏表紙側の半分が180°回る。あらかじめ上下逆に組んでおくと、閉じた本を裏返したときに
      表紙と天地が揃う。縦ページ（左とじ）は縦の折り目なので、この入れ替えは起きない。 */
-  const back = { template: 'back-cover' };
-  if (ORIENT_NAME === 'landscape' && CFG.back_cover_flip !== false) back.rotate = 180;
+  const backTpl = T[CFG.back_cover_template] ? CFG.back_cover_template : 'back-cover';
+  const back = { template: backTpl };
+  if ((T[backTpl] || {}).slots) back.photos = [backName];
+  if (ORIENT_NAME === 'landscape' && CFG.back_cover_flip !== false) back.flip = true;
   pages.push(back);
   while (pages.length % 4) pages.splice(pages.length - 1, 0, { template: 'blank' });
   S.pages = pages; S.sel = -1;
@@ -1578,6 +1588,7 @@ function buildIns() {
     </div>` : ''}`);
   }
   el.innerHTML = `
+    ${pg.flip ? '<p class="hint">このページは<b>上下逆に刷られます</b>（横ページの裏表紙）。紙をめくると天地が揃います。</p>' : ''}
     <h2>${i + 1}ページ目（${ORIENT_NAME === 'landscape'
         ? (isFarPage(i + 1) ? '下ページ' : '上ページ')
         : (isFarPage(i + 1) ? '右ページ' : '左ページ')}）</h2>

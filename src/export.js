@@ -4,7 +4,7 @@
    出典: 富士フイルムBIジャパン「小冊子プリント パーフェクトガイド」2026年5月 第2版 */
 'use strict';
 
-const { PDFDocument, rgb } = PDFLib;
+const { PDFDocument, rgb, degrees } = PDFLib;
 
 /* 入稿経路ごとのファイル容量上限（MB）。0 = 無制限
    出典: https://faq.printing.ne.jp/ マルチコピー機でプリントできるファイル容量 */
@@ -104,18 +104,22 @@ const hexRgb = h => {
            : rgb(0, 0, 0);
 };
 
-function placeOps(page, ops, embeds) {
+/** flip=true はページ全体を180度回して置く（上下逆に刷る指定）。
+    pdf-lib の rotate は指定した点まわりに回るので、対角の点を渡す。 */
+function placeOps(page, ops, embeds, flip) {
   ops.forEach((op, i) => {
+    const X = op.x * MM, Y = (PH - op.y - op.h) * MM;
+    const W = op.w * MM, H = op.h * MM;
+    const put = (extra) => flip
+      ? { x: PW * MM - X, y: PH * MM - Y, width: W, height: H, rotate: degrees(180), ...extra }
+      : { x: X, y: Y, width: W, height: H, ...extra };
     if (op.kind === 'rect') {
-      page.drawRectangle({ x: op.x * MM, y: (PH - op.y - op.h) * MM,
-        width: op.w * MM, height: op.h * MM,
-        color: hexRgb(op.color), opacity: op.opacity });
+      page.drawRectangle(put({ color: hexRgb(op.color), opacity: op.opacity }));
       return;
     }
     const img = embeds[i];
     if (!img) return;
-    page.drawImage(img, { x: op.x * MM, y: (PH - op.y - op.h) * MM,
-                          width: op.w * MM, height: op.h * MM });
+    page.drawImage(img, put());
   });
 }
 
@@ -170,7 +174,7 @@ async function exportPDF() {
   doc.setTitle(title); doc.setAuthor(CFG.credit || '');
   for (let i = 0; i < n; i++) {
     const page = doc.addPage([PW * MM, PH * MM]);
-    placeOps(page, allOps[i], await embedAll(doc, allOps[i]));
+    placeOps(page, allOps[i], await embedAll(doc, allOps[i]), !!S.pages[i].flip);
     if (i % 8 === 7) await new Promise(r => setTimeout(r));
   }
   const bytes = await doc.save();
