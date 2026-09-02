@@ -811,7 +811,12 @@ function autoPlan(mode) {
       pages.push({ template: t, photos: [p.name], caption: '' });
     }
   }
-  pages.push({ template: 'back-cover' });
+  /* 横ページ（上とじ）は、表紙と裏表紙が1枚の紙の同じ面にあり、横の折り目で折ると
+     裏表紙側の半分が180°回る。あらかじめ上下逆に組んでおくと、閉じた本を裏返したときに
+     表紙と天地が揃う。縦ページ（左とじ）は縦の折り目なので、この入れ替えは起きない。 */
+  const back = { template: 'back-cover' };
+  if (ORIENT_NAME === 'landscape' && CFG.back_cover_flip !== false) back.rotate = 180;
+  pages.push(back);
   while (pages.length % 4) pages.splice(pages.length - 1, 0, { template: 'blank' });
   S.pages = pages; S.sel = -1;
   renderAll();
