@@ -308,8 +308,6 @@ function gutterShift(t, pageNo) {
    版面の座標ではなくページの寸法から計算するので、冊子サイズや向きが変わっても追従する。 */
 
 const COVER_POS = { tl: '左上', tr: '右上', bl: '左下', br: '右下' };
-const GAP_RATIO = 0.6;          // タイトル字高に対する、サブタイトルまでのベースライン間隔
-                                // （以前は1.2。半分に詰めた）
 
 /** ページ端からの余白（mm）。A4縦の18mmを基準に、辺の長さで比例させる */
 const coverMargin = () => ({ x: PW * (18 / 210), y: PH * (18 / 297) });
@@ -359,7 +357,13 @@ function coverBlockSpecs(ti, su, titleText) {
   const tiSize = +CFG.size_title || ti.size;
   const suSize = su ? (+CFG.size_subtitle || su.size) : 0;
   const tiLead = tiSize * 1.3, suLead = suSize * 1.4;      // 行送りは字送りから決める
-  const gap = tiSize * PT * GAP_RATIO;                     // ベースライン間（mm）
+  /* ベースライン間（mm）。字高にそのまま比例させると、タイトルを大きくしたときに
+     空きが一緒に膨らんで離れて見える。目に見える空きがだいたい一定に保たれるよう、
+     「タイトルの下ヒゲ」「サブタイトルの字面」「わずかな余白」を足して決める。 */
+  const tiMm = tiSize * PT, suMm = suSize * PT;
+  const gap = tiMm * 0.20        // タイトルのベースラインから下へ出る分
+            + suMm * 0.72        // サブタイトルのベースラインから上の字面
+            + (0.6 + tiMm * 0.08); // 見た目の空き。大きくしても控えめにしか増やさない
 
   const out = { ...ti, x: m.x, w, align, size: tiSize, leading: tiLead,
                 color: CFG.color_title || ti.color };
@@ -642,6 +646,16 @@ function drawPage(cv, pg, pageNo, pxPerMm) {
 
 /** 右ペインのプレビューを、指やマウスでドラッグして切り抜き位置を動かす。
     Pointer Events なのでマウスもタッチも同じ処理で扱える。 */
+/** プレビューの canvas は width:100% / max-height / object-fit:contain なので、
+    要素の枠と実際に絵がある範囲がずれる。絵の側の位置と倍率を返す。
+    ここを枠のまま計算すると、当たり判定もドラッグ量も狂う。 */
+function previewRect(cv) {
+  const r = cv.getBoundingClientRect();
+  const per = Math.min(r.width / PW, r.height / PH);   // contain と同じ収め方
+  return { per, left: r.left + (r.width - PW * per) / 2,
+                 top:  r.top  + (r.height - PH * per) / 2 };
+}
+
 function bindCropDrag(cv, i) {
   const pg = S.pages[i], t = T[pg.template];
   if (!t || !hasCropFrame(pg, t)) { cv.style.touchAction = ''; cv.classList.remove('cropable'); return; }
@@ -650,9 +664,8 @@ function bindCropDrag(cv, i) {
   let st = null;
 
   cv.onpointerdown = e => {
-    const r = cv.getBoundingClientRect();
-    const per = r.width / PW;                          // 画面px / mm
-    const fr = frameAt(pg, t, i + 1, (e.clientX - r.left) / per, (e.clientY - r.top) / per);
+    const { per, left, top } = previewRect(cv);
+    const fr = frameAt(pg, t, i + 1, (e.clientX - left) / per, (e.clientY - top) / per);
     if (!fr) return;
     const slot = fr.slot || 0;
     const src = preparedSrc(photoBy(pg.photos[slot]), pg, fr);
