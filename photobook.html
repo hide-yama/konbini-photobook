@@ -295,6 +295,7 @@ body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
 .pickGrid figure:hover{border-color:var(--dim)}
 .pickGrid img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
 .cropRow .rot{font-size:14px;line-height:1;padding:2px 7px}
+.cropRow input[type=range]{flex:1 1 auto;min-width:44px}
 
 #bookModal .sheet{width:min(420px,94vw)}
 </style>
@@ -430,8 +431,10 @@ body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
 'use strict';
 
 const MM = 72 / 25.4;                    // 1mm = 2.8346pt
-/* 90度単位に丸めて 0/90/180/270 にする。回転まわりで先に必要になるのでここに置く */
+/* 90度単位に丸めて 0/90/180/270 にする。ページ全体の回転など、直角しか扱わない所で使う */
 const norm360 = d => ((Math.round(d / 90) * 90 % 360) + 360) % 360;
+/* 丸めずに 0〜359 へ収める。写真の自由角度で使う */
+const normAngle = d => (((+d || 0) % 360) + 360) % 360;
 const CFG = JSON.parse(document.getElementById('cfg-data').textContent);
 const TPL = JSON.parse(document.getElementById('tpl-data').textContent);
 /* ── 冊子サイズと向き ──
@@ -611,27 +614,37 @@ function pageRotation(pg) {
   return 0;
 }
 
-/** rot は数値（時計回りの度数）か、テンプレート側の 'cw'/'ccw'/'auto-cw'/'auto-ccw' */
+/** rot は数値（時計回りの度数・任意）か、テンプレート側の 'cw'/'ccw'/'auto-cw'/'auto-ccw' */
 function applyRotate(src, rot) {
   if (!rot) return src;
   let deg;
   if (typeof rot === 'number') {
-    deg = norm360(rot);
+    deg = normAngle(rot);
   } else {
     const s = String(rot), wide = src.width > src.height;
     if (!(s === 'cw' || s === 'ccw' || (s.startsWith('auto') && wide))) return src;
     deg = s.endsWith('ccw') ? 270 : 90;   // ccw = 反時計90 = 時計270
   }
   if (!deg) return src;
-  const swap = deg === 90 || deg === 270;
-  const c = document.createElement('canvas');
-  c.width = swap ? src.height : src.width;
-  c.height = swap ? src.width : src.height;
-  const x = c.getContext('2d');
-  x.translate(c.width / 2, c.height / 2);
-  x.rotate(deg * Math.PI / 180);
-  x.drawImage(src, -src.width / 2, -src.height / 2);
-  return c;
+
+  const rad = deg * Math.PI / 180;
+  const c = Math.abs(Math.cos(rad)), sn = Math.abs(Math.sin(rad));
+  const w = src.width, h = src.height;
+  /* 直角以外に回すと四隅が透明になる。そのまま枠に敷くと角が白く抜けるので、
+     透明を含まない最大の範囲だけを残す。外接矩形と同じ形で切ると、
+     直角のときは元のまま（切り落としゼロ）になる。 */
+  const A = (w * c + h * sn) / (w * sn + h * c);     // 回した後の外接矩形の縦横比
+  const W = Math.min(w / (c + sn / A), h / (sn + c / A));
+  const cw = Math.max(1, Math.round(W)), ch = Math.max(1, Math.round(W / A));
+
+  const cv = document.createElement('canvas');
+  cv.width = cw; cv.height = ch;
+  const x = cv.getContext('2d');
+  x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+  x.translate(cw / 2, ch / 2);
+  x.rotate(rad);
+  x.drawImage(src, -w / 2, -h / 2);
+  return cv;
 }
 
 function cropSrc(src, cr) {
@@ -689,12 +702,12 @@ function fitBox(sw, sh, fw, fh, mode, adj) {
     2枚組の版面では写真ごとに向きを変えたいので、枠ごとに持てるようにしてある。 */
 function slotRotation(pg, slot) {
   const r = pg && pg.rots && pg.rots[slot];
-  return r == null ? pageRotation(pg) : norm360(r);
+  return r == null ? pageRotation(pg) : normAngle(r);
 }
 
 function setSlotRot(pg, slot, deg) {
   pg.rots = pg.rots || [];
-  pg.rots[slot] = norm360(deg);          // 0も明示的に持つ（ページ指定を打ち消すため）
+  pg.rots[slot] = normAngle(deg);        // 0も明示的に持つ（ページ指定を打ち消すため）
 }
 
 /** 回転と src_crop を適用したあとの元画像。drawPage と当たり判定で同じものを使う */
@@ -1142,10 +1155,29 @@ function choosePhoto(slot, idx) {
   setPhoto(slot, q.name);            // setPhoto の中で renderIns まで走る
 }
 
+/** ↺↻ の90度ずつ。1枚だけの版面なら、対になる縦向きの版面へ入れ替える */
 function rotateSlot(slot, step) {
   const pg = S.pages[S.sel]; if (!pg) return;
-  setSlotRot(pg, slot, slotRotation(pg, slot) + step);
+  const t = T[pg.template] || {};
+  const cur = slotRotation(pg, slot);
+  const next = norm360(cur + step);
+  if ((t.slots || 0) === 1) {
+    const wasQ = cur === 90 || cur === 270, isQ = next === 90 || next === 270;
+    if (wasQ !== isQ) swapTemplateForRotation(pg, isQ);
+  }
+  setSlotRot(pg, slot, next);
   renderIns(); touch(false);
+}
+
+/** スライダーからの自由角度。作り直すと掴んでいるつまみが外れるので、
+    表示だけ書き換えて絵を描き直す */
+function setSlotAngle(slot, deg) {
+  const pg = S.pages[S.sel]; if (!pg) return;
+  setSlotRot(pg, slot, deg);
+  const l = $(`#ra${slot}`); if (l) l.textContent = `${normAngle(deg)}°`;
+  const cv = $('#insPrev'); if (cv) drawPage(cv, pg, S.sel + 1, 2.6);
+  clearTimeout(setSlotAngle._t);
+  setSlotAngle._t = setTimeout(() => { renderGrid(); drawPreview(); }, 120);
 }
 
 function setZoom(slot, pct) {
@@ -1864,6 +1896,12 @@ function movePageTo(from, to) {
   return true;
 }
 
+/** カードに出す角度。写真を置く版面なら1枚目の角度、そうでなければページ全体の角度 */
+function cardAngle(pg) {
+  const t = T[pg.template];
+  return (t && (t.slots || 0) > 0) ? slotRotation(pg, 0) : pageRotation(pg);
+}
+
 function renderGrid() {
   const g = $('#grid');
   $('#gridEmpty').style.display = S.pages.length ? 'none' : '';
@@ -1873,7 +1911,7 @@ function renderGrid() {
       <canvas class="ph"></canvas>
       <span class="side">${ORIENT_NAME === 'landscape'
         ? (isFarPage(i + 1) ? '下' : '上') : (isFarPage(i + 1) ? '右' : '左')}</span>
-      ${pageRotation(pg) ? `<span class="rot">${pageRotation(pg)}°</span>` : ''}
+      ${cardAngle(pg) ? `<span class="rot">${cardAngle(pg)}°</span>` : ''}
       ${S.pickPages ? '<span class="chk"></span>' : ''}
       <div class="meta"><span class="no">${i + 1}</span><span class="tn">${esc(pg.template)}</span></div>
     </div>`).join('');
@@ -1998,19 +2036,19 @@ function buildIns() {
               <img src="${q.thumb}" alt=""></figure>`).join('')
           : '<p class="hint">先に写真を読み込んでください</p>'}
       </div>` : ''}
-    ${multi ? `<div class="cropRow">
+    ${p ? `<div class="cropRow">
       <button class="tiny rot" onclick="rotateSlot(${s},-90)" title="左に90°回す">↺</button>
-      <span class="u zl">${deg}°</span>
+      <span class="u zl" id="ra${s}">${deg}°</span>
       <button class="tiny rot" onclick="rotateSlot(${s},90)" title="右に90°回す">↻</button>
-      <span class="spacer"></span>
-      <button class="tiny" onclick="resetCrop(${s})" title="切り抜きと回転を戻す">戻す</button>
+      <input type="range" min="0" max="359" step="1" value="${deg}"
+        oninput="setSlotAngle(${s},+this.value)" title="好きな角度に回す">
     </div>` : ''}
     ${cropable ? `<div class="cropRow">
       <span class="u">拡大</span>
       <input type="range" min="100" max="300" step="5" value="${cz}"
         oninput="setZoom(${s},+this.value)" title="拡大率">
       <span class="u zl" id="zl${s}">${cz}%</span>
-      ${multi ? '' : `<button class="tiny" onclick="resetCrop(${s})" title="切り抜きと回転を戻す">戻す</button>`}
+      <button class="tiny" onclick="resetCrop(${s})" title="切り抜きと回転を戻す">戻す</button>
     </div>` : ''}`);
   }
   el.innerHTML = `
@@ -2024,7 +2062,7 @@ function buildIns() {
     <div class="field" style="margin-top:12px">
       <label>版面</label><select onchange="setTpl(this.value)">${opts}</select>
     </div>
-    ${(t.slots || 0) > 1 ? '' : `
+    ${(t.slots || 0) > 0 ? '' : `
     <h2>回転</h2>
     <div class="rotRow">
       <button onclick="rotatePage(-90)" title="左に90°回す">↺</button>
@@ -2075,7 +2113,7 @@ function touch(all) {
     if (c) drawPage(c, S.pages[S.sel], S.sel + 1, 1.35);
     const m = $(`.card[data-i="${S.sel}"] .tn`); if (m) m.textContent = S.pages[S.sel].template;
     const r = $(`.card[data-i="${S.sel}"] .rot`);
-    if (!!pageRotation(S.pages[S.sel]) !== !!r) renderGrid();
+    if (!!cardAngle(S.pages[S.sel]) !== !!r) renderGrid();
   }
   const p = $('#insPrev'); if (p && S.sel >= 0) drawPage(p, S.pages[S.sel], S.sel + 1, 2.6);
   renderCount();
