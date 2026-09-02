@@ -37,7 +37,7 @@ async function buildPageOps(pg, pageNo, dpi, quality) {
     const boxH = Math.max(1, Math.round(fr.h / 25.4 * dpi));
     const need = Math.round(Math.max(boxW, boxH) * ((fr.fit === 'cover' || fr.src_crop) ? 1.9 : 1.15));
     let src = await decodeAt(p, need, need);
-    src = applyRotate(src, pg.rotate || fr.rotate);
+    src = applyRotate(src, slotRotation(pg, fr.slot || 0) || fr.rotate);
     src = cropSrc(src, fr.src_crop);
     const f = fitBox(src.width, src.height, fr.w, fr.h, fr.fit || 'contain',
                      cropOf(pg, fr.slot || 0));

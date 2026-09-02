@@ -272,5 +272,20 @@ body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
 #insPrev.cropable{cursor:grab}
 #insPrev.cropable:active{cursor:grabbing}
 .cropRow{display:flex;align-items:center;gap:6px;margin:-2px 0 8px}
+.cropRow button,.cropRow .u{white-space:nowrap;flex:0 0 auto}
 .cropRow input[type=range]{flex:1 1 auto;min-width:0;padding:0;height:20px}
 .cropRow .zl{min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* 写真をサムネイルで選ぶ */
+.slot .photoBtn{flex:1;min-width:0;display:flex;align-items:center;gap:6px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+.slot .photoBtn .cv{margin-left:auto;color:var(--dim)}
+.pickGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:5px;
+  margin:0 0 8px;padding:7px;background:#f4f4f2;border:1px solid var(--line);border-radius:7px;
+  max-height:230px;overflow-y:auto}
+.pickGrid figure{margin:0;cursor:pointer;border-radius:4px;overflow:hidden;line-height:0;
+  border:2px solid transparent}
+.pickGrid figure.on{border-color:var(--accent)}
+.pickGrid figure:hover{border-color:var(--dim)}
+.pickGrid img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.cropRow .rot{font-size:14px;line-height:1;padding:2px 7px}

@@ -106,6 +106,7 @@ const S = {
   pickPhotos: false, markedPhotos: new Set(),                 // 写真トレイの複数選択
   prev: [], prevAt: 0,                                        // 見開きプレビュー
   infoOpen: false,                                            // 「本の情報」を開いているか
+  picker: null,                                               // 写真を選ぶ一覧を開いている枠
 };
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -258,9 +259,22 @@ function fitBox(sw, sh, fw, fh, mode, adj) {
   return { drawW: sw * s, drawH: sh * s, sx: 0, sy: 0, sw, sh };
 }
 
+/** その枠の回転角。枠ごとの指定があればそれ、無ければページ全体の指定に従う。
+    2枚組の版面では写真ごとに向きを変えたいので、枠ごとに持てるようにしてある。 */
+function slotRotation(pg, slot) {
+  const r = pg && pg.rots && pg.rots[slot];
+  return r == null ? pageRotation(pg) : norm360(r);
+}
+
+function setSlotRot(pg, slot, deg) {
+  pg.rots = pg.rots || [];
+  pg.rots[slot] = norm360(deg);          // 0も明示的に持つ（ページ指定を打ち消すため）
+}
+
 /** 回転と src_crop を適用したあとの元画像。drawPage と当たり判定で同じものを使う */
 function preparedSrc(p, pg, fr) {
-  return cropSrc(applyRotate(p.prev, pg.rotate || fr.rotate), fr.src_crop);
+  const slot = fr.slot || 0;
+  return cropSrc(applyRotate(p.prev, slotRotation(pg, slot) || fr.rotate), fr.src_crop);
 }
 
 /** ページ上の位置(mm)にある、切り抜きを動かせる枠を返す */
@@ -674,6 +688,23 @@ function bindCropDrag(cv, i) {
   };
 }
 
+function togglePicker(slot) {
+  S.picker = (S.picker === slot) ? null : slot;
+  renderIns();
+}
+
+function choosePhoto(slot, idx) {
+  const q = S.photos[idx]; if (!q) return;
+  S.picker = null;
+  setPhoto(slot, q.name);            // setPhoto の中で renderIns まで走る
+}
+
+function rotateSlot(slot, step) {
+  const pg = S.pages[S.sel]; if (!pg) return;
+  setSlotRot(pg, slot, slotRotation(pg, slot) + step);
+  renderIns(); touch(false);
+}
+
 function setZoom(slot, pct) {
   const pg = S.pages[S.sel]; if (!pg) return;
   setCrop(pg, slot, { ...cropOf(pg, slot), z: Math.max(1, pct / 100) });
@@ -686,6 +717,7 @@ function setZoom(slot, pct) {
 function resetCrop(slot) {
   const pg = S.pages[S.sel]; if (!pg) return;
   clearCrop(pg, slot);
+  if (pg.rots) { delete pg.rots[slot]; if (!pg.rots.some(v => v != null)) delete pg.rots; }
   renderIns(); touch(false);
 }
 
@@ -695,6 +727,15 @@ const RHYTHM = {
   simple: ['big', 'one', 'one', 'duo', 'one', 'big', 'one', 'duo'],
   portrait: ['fill', 'one', 'one', 'fill', 'one', 'one'],
 };
+
+/** 2枚組の分割の向きを、写真の縦横から選ぶ。
+    半分の枠の縦横比に近いほうを採る（切り抜かれる量が少なくて済む）。 */
+function duoTemplate(a, b) {
+  const half = k => { const f = T[k] && T[k].images[0]; return f ? f.w / f.h : 1; };
+  const ar = ((a.w / a.h) + (b.w / b.h)) / 2;
+  const near = k => Math.abs(Math.log(ar / half(k)));
+  return near('duo-fill-v') <= near('duo-fill-h') ? 'duo-fill-v' : 'duo-fill-h';
+}
 
 /** ページいっぱいの1枚。ページと向きの違う写真は90°回して合わせる */
 function fillPage(p) {
@@ -711,7 +752,18 @@ function autoPlan(mode) {
   const pages = [{ template: CFG.cover_template || 'cover', photos: [ph[0].name] },
                  { template: 'blank' }];
   const q = ph.slice(1);
-  if (ORIENT_NAME === 'landscape') {
+  if (mode === 'duo') {
+    /* 2枚ずつ、隙間なく接する版面に置く。写真が1枚余ったら全面1枚に。
+       版面(T)は向きごとに切り替わっているので、縦横どちらでもこの1本で足りる */
+    while (q.length) {
+      if (q.length >= 2) {
+        const a = q.shift(), b = q.shift();
+        pages.push({ template: duoTemplate(a, b), photos: [a.name, b.name], caption: '', caption2: '' });
+      } else {
+        pages.push(fillPage(q.shift()));
+      }
+    }
+  } else if (ORIENT_NAME === 'landscape') {
     /* 横ページ。使える版面が縦とは別なので、ここで分ける */
     const R = { fill: ['fill'], portrait: ['fill', 'one', 'one', 'fill', 'one', 'one'],
                 simple: ['fill', 'one', 'one', 'duo', 'one', 'fill', 'one', 'duo'] };
@@ -1233,13 +1285,6 @@ function renderTray() {
     const name = S.photos[+el.dataset.i].name;
     el.onclick = () => {
       if (S.pickPhotos) return markPhoto(name);
-      if (ASSIGN) {
-        const { page, slot } = ASSIGN;
-        ASSIGN = null;
-        assignPhotoToPage(page, name, slot);
-        if (NARROW()) setTab('ins');
-        return;
-      }
       addPage(name);
     };
     el.draggable = !S.pickPhotos;
@@ -1262,12 +1307,6 @@ function renderTray() {
   }
   const bar = $('#photoActions');
   if (!bar) return;
-  if (ASSIGN) {
-    bar.style.display = '';
-    bar.innerHTML = `<span class="mini">${ASSIGN.page + 1}ページ目に入れる写真をタップ</span>
-      <button onclick="cancelAssign()">やめる</button>`;
-    return;
-  }
   if (!S.pickPhotos) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
   const k = S.markedPhotos.size;
   bar.style.display = '';
@@ -1295,19 +1334,6 @@ function clearDropMarks() {
 }
 
 function endDrag() { DRAG.kind = null; DRAG.from = -1; DRAG.to = -1; DRAG.photo = null; clearDropMarks(); }
-
-/* 「この枠に入れる写真を選ぶ」状態。ドラッグの使えないタッチ用 */
-let ASSIGN = null;                 // { page, slot }
-
-function startAssign(slot) {
-  if (S.sel < 0) return;
-  ASSIGN = { page: S.sel, slot };
-  if (NARROW()) setTab('photos');
-  renderTray();
-  toast('入れる写真をタップしてください');
-}
-
-function cancelAssign() { ASSIGN = null; renderTray(); }
 
 /** トレイから落とされた写真をページへ入れる。
     空きスロットがあればそこへ、無ければ1枚目を差し替える。
@@ -1480,20 +1506,35 @@ function buildIns() {
     const fr = (t.images || []).find(f => (f.slot || 0) === s);
     const cropable = fr && (fr.fit || 'contain') === 'cover' && p;
     const cz = Math.round(cropOf(pg, s).z * 100);
+    const deg = slotRotation(pg, s);
+    const multi = (t.slots || 0) > 1;
     slots.push(`<div class="slot">
-      <img src="${p ? p.thumb : ''}" alt="" class="pick" onclick="startAssign(${s})"
+      <img src="${p ? p.thumb : ''}" alt="" class="pick" onclick="togglePicker(${s})"
            title="タップして写真を選ぶ">
-      <select onchange="setPhoto(${s},this.value)">
-        <option value="">— 選ぶ —</option>
-        ${S.photos.map(q => `<option ${q.name === cur ? 'selected' : ''}>${esc(q.name)}</option>`).join('')}
-      </select></div>
-      ${cropable ? `<div class="cropRow">
-        <span class="u">拡大</span>
-        <input type="range" min="100" max="300" step="5" value="${cz}"
-          oninput="setZoom(${s},+this.value)" title="拡大率">
-        <span class="u zl" id="zl${s}">${cz}%</span>
-        <button class="tiny" onclick="resetCrop(${s})" title="中央・等倍に戻す">戻す</button>
-      </div>` : ''}`);
+      <button class="photoBtn" onclick="togglePicker(${s})">
+        ${p ? esc(cur) : '写真を選ぶ'}<span class="cv">▾</span></button>
+    </div>
+    ${S.picker === s ? `<div class="pickGrid">
+        ${S.photos.length
+          ? S.photos.map((q, qi) => `<figure class="${q.name === cur ? 'on' : ''}"
+              onclick="choosePhoto(${s},${qi})" title="${esc(q.name)}">
+              <img src="${q.thumb}" alt=""></figure>`).join('')
+          : '<p class="hint">先に写真を読み込んでください</p>'}
+      </div>` : ''}
+    ${multi ? `<div class="cropRow">
+      <button class="tiny rot" onclick="rotateSlot(${s},-90)" title="左に90°回す">↺</button>
+      <span class="u zl">${deg}°</span>
+      <button class="tiny rot" onclick="rotateSlot(${s},90)" title="右に90°回す">↻</button>
+      <span class="spacer"></span>
+      <button class="tiny" onclick="resetCrop(${s})" title="切り抜きと回転を戻す">戻す</button>
+    </div>` : ''}
+    ${cropable ? `<div class="cropRow">
+      <span class="u">拡大</span>
+      <input type="range" min="100" max="300" step="5" value="${cz}"
+        oninput="setZoom(${s},+this.value)" title="拡大率">
+      <span class="u zl" id="zl${s}">${cz}%</span>
+      ${multi ? '' : `<button class="tiny" onclick="resetCrop(${s})" title="切り抜きと回転を戻す">戻す</button>`}
+    </div>` : ''}`);
   }
   el.innerHTML = `
     <h2>${i + 1}ページ目（${ORIENT_NAME === 'landscape'
@@ -1504,6 +1545,7 @@ function buildIns() {
     <div class="field" style="margin-top:12px">
       <label>版面</label><select onchange="setTpl(this.value)">${opts}</select>
     </div>
+    ${(t.slots || 0) > 1 ? '' : `
     <h2>回転</h2>
     <div class="rotRow">
       <button onclick="rotatePage(-90)" title="左に90°回す">↺</button>
@@ -1513,7 +1555,7 @@ function buildIns() {
       <button class="tiny" onclick="rotateReset()" ${pageRotation(pg) ? '' : 'disabled'}>戻す</button>
     </div>
     <p class="hint">押すたびに90°ずつ回ります。90°と270°のときは、版面も
-      縦向きのものへ自動で入れ替えます。</p>
+      縦向きのものへ自動で入れ替えます。</p>`}
     ${(() => {
       const fs = textFieldsOf(t);
       if (!fs.length) return '';
@@ -1562,7 +1604,7 @@ function touch(all) {
   renderCount();
 }
 
-function setTpl(v) { S.pages[S.sel].template = v; renderIns(); touch(false); }
+function setTpl(v) { S.pages[S.sel].template = v; S.picker = null; renderIns(); touch(false); }
 
 /* このページで {title} などを出すかどうか。切ったものを pg.hide に貯める */
 function setShowText(k, show) {

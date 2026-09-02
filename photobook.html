@@ -278,8 +278,23 @@ body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
 #insPrev.cropable{cursor:grab}
 #insPrev.cropable:active{cursor:grabbing}
 .cropRow{display:flex;align-items:center;gap:6px;margin:-2px 0 8px}
+.cropRow button,.cropRow .u{white-space:nowrap;flex:0 0 auto}
 .cropRow input[type=range]{flex:1 1 auto;min-width:0;padding:0;height:20px}
 .cropRow .zl{min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* 写真をサムネイルで選ぶ */
+.slot .photoBtn{flex:1;min-width:0;display:flex;align-items:center;gap:6px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+.slot .photoBtn .cv{margin-left:auto;color:var(--dim)}
+.pickGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:5px;
+  margin:0 0 8px;padding:7px;background:#f4f4f2;border:1px solid var(--line);border-radius:7px;
+  max-height:230px;overflow-y:auto}
+.pickGrid figure{margin:0;cursor:pointer;border-radius:4px;overflow:hidden;line-height:0;
+  border:2px solid transparent}
+.pickGrid figure.on{border-color:var(--accent)}
+.pickGrid figure:hover{border-color:var(--dim)}
+.pickGrid img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.cropRow .rot{font-size:14px;line-height:1;padding:2px 7px}
 </style>
 </head>
 <body>
@@ -380,7 +395,7 @@ body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
 
 <input type="file" id="filePick" multiple accept="image/*" style="display:none">
 
-<script id="cfg-data" type="application/json">{"title": "写真集タイトル", "subtitle": "", "subtitle_today": true, "credit": "photo by Hideki Yamamoto", "cover_pos": "bl", "band": false, "band_color": "#000000", "band_opacity": 70, "font_title": "mincho", "font_subtitle": "sans", "font_credit": "sans", "plan_mode": "fill", "orientation": "portrait", "book": "B5", "safe_margin_mm": 7, "gutter_mm": 6, "image_dpi": 300, "jpeg_quality": 95, "delivery": "usb", "page_numbers": true, "page_number_start": 3, "binding": "left", "cover_template": "cover", "rotate_degrees": 90}</script>
+<script id="cfg-data" type="application/json">{"title": "写真集タイトル", "subtitle": "", "subtitle_today": true, "credit": "photo by Hideki Yamamoto", "cover_pos": "bl", "band": false, "band_color": "#000000", "band_opacity": 70, "font_title": "mincho", "font_subtitle": "sans", "font_credit": "sans", "plan_mode": "duo", "orientation": "portrait", "book": "B5", "safe_margin_mm": 7, "gutter_mm": 6, "image_dpi": 300, "jpeg_quality": 95, "delivery": "usb", "page_numbers": true, "page_number_start": 3, "binding": "left", "cover_template": "cover", "rotate_degrees": 90}</script>
 <script id="tpl-data" type="application/json">{"templates": {"portrait-fill": {"label": "① 縦写真・ページいっぱい", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 200, "h": 287, "fit": "cover"}], "texts": []}, "landscape-wide": {"label": "② 横写真・上下中央・幅いっぱい", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 82, "w": 200, "h": 133, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 5, "y": 225, "w": 200, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "portrait-one": {"label": "③ 縦写真1枚・標準余白", "slots": 1, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 26, "y": 30, "w": 158, "h": 237, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 26, "y": 277, "w": 158, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "landscape-one": {"label": "④ 横写真1枚・標準余白", "slots": 1, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 20, "y": 92, "w": 170, "h": 113, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 20, "y": 214, "w": 170, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "landscape-duo": {"label": "⑤ 横写真2枚・上下", "slots": 2, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 20, "y": 27, "w": 170, "h": 113, "fit": "contain"}, {"slot": 1, "x": 20, "y": 158, "w": 170, "h": 113, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 20, "y": 148, "w": 170, "size": 7, "font": "gothic", "align": "left", "color": "#9a9a9a", "leading": 10}, {"content": "{caption2}", "x": 20, "y": 279, "w": 170, "size": 7, "font": "gothic", "align": "left", "color": "#9a9a9a", "leading": 10}]}, "rot-fill": {"label": "⑥ 横写真を縦に回転・ページいっぱい", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 200, "h": 287, "fit": "cover", "rotate": "auto-ccw"}], "texts": []}, "rot-one": {"label": "⑦ 横写真を縦に回転・標準余白", "slots": 1, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 26, "y": 24, "w": 158, "h": 237, "fit": "contain", "rotate": "auto-ccw"}], "texts": [{"content": "{caption}", "x": 196, "y": 275, "w": 150, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11, "rotate": 90}]}, "portrait-duo": {"label": "⑧ 縦写真2枚・横並び", "slots": 2, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 12, "y": 78, "w": 90, "h": 135, "fit": "contain"}, {"slot": 1, "x": 108, "y": 78, "w": 90, "h": 135, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 12, "y": 221, "w": 90, "size": 7, "font": "gothic", "align": "left", "color": "#9a9a9a", "leading": 10}, {"content": "{caption2}", "x": 108, "y": 221, "w": 90, "size": 7, "font": "gothic", "align": "left", "color": "#9a9a9a", "leading": 10}]}, "cover": {"label": "表紙・全面写真＋白抜きタイトル", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 200, "h": 287, "fit": "cover"}], "texts": [{"content": "{title}", "x": 18, "y": 250, "w": 174, "size": 36.4, "font": "mincho-bold", "align": "left", "color": "#ffffff", "leading": 47.6, "anchor": "bottom"}, {"content": "{subtitle}", "x": 18, "y": 265.4, "w": 174, "size": 13.3, "font": "sans", "align": "left", "color": "#ffffff", "leading": 19.6}], "nombre": false, "cover_block": true}, "cover-quiet": {"label": "表紙・小さな写真と大きな余白（静かな表紙）", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 42, "y": 46, "w": 126, "h": 94, "fit": "contain"}], "texts": [{"content": "{title}", "x": 42, "y": 186, "w": 126, "size": 26.6, "font": "mincho", "align": "left", "color": "#1a1a1a", "leading": 37.8, "anchor": "bottom"}, {"content": "{subtitle}", "x": 42, "y": 197.9, "w": 126, "size": 11.9, "font": "sans", "align": "left", "color": "#8a8a8a", "leading": 18.2}], "nombre": false, "cover_block": true}, "back-cover": {"label": "裏表紙・クレジットのみ", "slots": 0, "page_side": "any", "gutter": false, "images": [], "texts": [{"content": "{credit}", "x": 10, "y": 274, "w": 190, "size": 7.5, "font": "sans", "align": "right", "color": "#a0a0a0", "leading": 11}], "nombre": false}, "text": {"label": "テキストのみ（扉・あとがき）", "slots": 0, "page_side": "any", "gutter": true, "images": [], "texts": [{"content": "{caption}", "x": 30, "y": 76, "w": 150, "size": 10, "font": "mincho", "align": "left", "color": "#222222", "leading": 21}]}, "blank": {"label": "白ページ（ページ数調整用）", "slots": 0, "page_side": "any", "gutter": true, "images": [], "texts": [], "nombre": false}, "spread-L": {"label": "［応用］見開き全面・左half（次ページに spread-R を置く）", "slots": 1, "page_side": "even", "gutter": false, "pair": "spread-R", "images": [{"slot": 0, "x": 5, "y": 5, "w": 205, "h": 287, "fit": "cover", "src_crop": [0, 0, 0.5, 1]}], "texts": []}, "spread-R": {"label": "［応用］見開き全面・右half（前ページの spread-L と対）", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 0, "y": 5, "w": 205, "h": 287, "fit": "cover", "src_crop": [0.5, 0, 1, 1]}], "texts": []}, "spread-band-L": {"label": "［応用］見開き・横長の帯（上下に大きな余白）左half", "slots": 1, "page_side": "even", "gutter": false, "pair": "spread-band-R", "images": [{"slot": 0, "x": 5, "y": 96, "w": 205, "h": 112, "fit": "cover", "src_crop": [0, 0, 0.5, 1]}], "texts": []}, "spread-band-R": {"label": "［応用］見開き・横長の帯 右half", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 0, "y": 96, "w": 205, "h": 112, "fit": "cover", "src_crop": [0.5, 0, 1, 1]}], "texts": [{"content": "{caption}", "x": 130, "y": 218, "w": 75, "size": 7.5, "font": "gothic", "align": "right", "color": "#8a8a8a", "leading": 11}]}, "edge-out-R": {"label": "［応用］横写真を小口(右)寄せ・天寄り。ノド側に大きな余白", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 47, "y": 38, "w": 158, "h": 105, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 47, "y": 154, "w": 158, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "edge-out-L": {"label": "［応用］横写真を小口(左)寄せ・天寄り", "slots": 1, "page_side": "even", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 38, "w": 158, "h": 105, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 5, "y": 154, "w": 158, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "low-wide-R": {"label": "［応用］横写真を地寄せ・小口(右)寄せ。天に大きな余白", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 47, "y": 168, "w": 158, "h": 105, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 47, "y": 284, "w": 158, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "low-wide-L": {"label": "［応用］横写真を地寄せ・小口(左)寄せ", "slots": 1, "page_side": "even", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 168, "w": 158, "h": 105, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 5, "y": 284, "w": 158, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "tall-out-R": {"label": "［応用］縦写真を小口(右)寄せ・天地大きく", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 72, "y": 22, "w": 133, "h": 200, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 72, "y": 233, "w": 133, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "tall-out-L": {"label": "［応用］縦写真を小口(左)寄せ・天地大きく", "slots": 1, "page_side": "even", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 22, "w": 133, "h": 200, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 5, "y": 233, "w": 133, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "quiet-R": {"label": "［応用］小さな写真ひとつ・地寄せ／余白で読ませる（右ページ）", "slots": 1, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 118, "y": 186, "w": 87, "h": 58, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 118, "y": 255, "w": 87, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 12}]}, "quiet-L": {"label": "［応用］小さな写真ひとつ・地寄せ／余白で読ませる（左ページ）", "slots": 1, "page_side": "even", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 186, "w": 87, "h": 58, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 5, "y": 255, "w": 87, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 12}]}, "duo-offset-R": {"label": "［応用］大小2点を段違いに（右ページ）", "slots": 2, "page_side": "odd", "gutter": false, "images": [{"slot": 0, "x": 47, "y": 30, "w": 132, "h": 88, "fit": "cover"}, {"slot": 1, "x": 120, "y": 150, "w": 85, "h": 106, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 47, "y": 129, "w": 100, "size": 7, "font": "gothic", "align": "left", "color": "#9a9a9a", "leading": 10}]}, "duo-offset-L": {"label": "［応用］大小2点を段違いに（左ページ）", "slots": 2, "page_side": "even", "gutter": false, "images": [{"slot": 0, "x": 31, "y": 30, "w": 132, "h": 88, "fit": "cover"}, {"slot": 1, "x": 5, "y": 150, "w": 85, "h": 106, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 63, "y": 129, "w": 100, "size": 7, "font": "gothic", "align": "right", "color": "#9a9a9a", "leading": 10}]}, "triptych": {"label": "［応用］横写真3点を縦に積む（細い帯のリズム）", "slots": 3, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 28, "y": 42, "w": 154, "h": 51, "fit": "cover"}, {"slot": 1, "x": 28, "y": 105, "w": 154, "h": 51, "fit": "cover"}, {"slot": 2, "x": 28, "y": 168, "w": 154, "h": 51, "fit": "cover"}], "texts": []}, "grid-4": {"label": "［応用］4点グリッド（記録的に見せたいとき）", "slots": 4, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 14, "y": 68, "w": 88, "h": 59, "fit": "cover"}, {"slot": 1, "x": 108, "y": 68, "w": 88, "h": 59, "fit": "cover"}, {"slot": 2, "x": 14, "y": 133, "w": 88, "h": 59, "fit": "cover"}, {"slot": 3, "x": 108, "y": 133, "w": 88, "h": 59, "fit": "cover"}], "texts": []}, "full-page": {"label": "［応用］1ページ全面（印字可能領域いっぱい）", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 200, "h": 287, "fit": "cover"}], "texts": []}, "back-cover-fill": {"label": "裏表紙・全面写真＋白抜きクレジット", "slots": 1, "page_side": "any", "gutter": false, "nombre": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 200, "h": 287, "fit": "cover"}], "texts": [{"content": "{credit}", "x": 18, "y": 272, "w": 174, "size": 8.5, "font": "sans", "align": "left", "color": "#ffffff", "leading": 13}]}, "back-cover-photo": {"label": "裏表紙・小さな写真＋クレジット", "slots": 1, "page_side": "any", "gutter": false, "nombre": false, "images": [{"slot": 0, "x": 55, "y": 84, "w": 100, "h": 100, "fit": "cover"}], "texts": [{"content": "{credit}", "x": 30, "y": 214, "w": 150, "size": 8, "font": "sans", "align": "center", "color": "#8a8a8a", "leading": 13}]}, "duo-fill-v": {"label": "⑨ 写真2枚・上下ぴったり・ページいっぱい", "slots": 2, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 200, "h": 143.5, "fit": "cover"}, {"slot": 1, "x": 5, "y": 148.5, "w": 200, "h": 143.5, "fit": "cover"}], "texts": []}, "duo-fill-h": {"label": "⑩ 写真2枚・左右ぴったり・ページいっぱい", "slots": 2, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 100, "h": 287, "fit": "cover"}, {"slot": 1, "x": 105, "y": 5, "w": 100, "h": 287, "fit": "cover"}], "texts": []}}, "templates_landscape": {"land-fill": {"label": "① 写真・ページいっぱい", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 287, "h": 200, "fit": "cover"}], "texts": []}, "land-one": {"label": "② 写真1枚・標準余白", "slots": 1, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 24, "y": 18, "w": 249, "h": 150, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 24, "y": 190, "w": 249, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "land-wide": {"label": "③ 写真・幅いっぱい（上下に余白）", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 40, "w": 287, "h": 130, "fit": "cover"}], "texts": []}, "land-duo": {"label": "④ 写真2枚・横並び", "slots": 2, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 24, "y": 32, "w": 120, "h": 140, "fit": "cover"}, {"slot": 1, "x": 153, "y": 32, "w": 120, "h": 140, "fit": "cover"}], "texts": [{"content": "{caption}", "x": 24, "y": 186, "w": 120, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}, {"content": "{caption2}", "x": 153, "y": 186, "w": 120, "size": 7.5, "font": "gothic", "align": "left", "color": "#8a8a8a", "leading": 11}]}, "land-tall": {"label": "⑤ 縦写真1枚・中央", "slots": 1, "page_side": "any", "gutter": true, "images": [{"slot": 0, "x": 88, "y": 14, "w": 121, "h": 182, "fit": "contain"}], "texts": [{"content": "{caption}", "x": 88, "y": 206, "w": 121, "size": 7.5, "font": "gothic", "align": "center", "color": "#8a8a8a", "leading": 11}]}, "cover": {"label": "表紙・全面写真＋白抜きタイトル", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 287, "h": 200, "fit": "cover"}], "texts": [{"content": "{title}", "x": 20, "y": 166, "w": 257, "size": 36.4, "font": "mincho-bold", "align": "left", "color": "#ffffff", "leading": 47.6, "anchor": "bottom"}, {"content": "{subtitle}", "x": 20, "y": 181.4, "w": 257, "size": 13.3, "font": "sans", "align": "left", "color": "#ffffff", "leading": 19.6}], "nombre": false, "cover_block": true}, "cover-quiet": {"label": "表紙・小さな写真と大きな余白（静かな表紙）", "slots": 1, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 74, "y": 26, "w": 149, "h": 100, "fit": "cover"}], "texts": [{"content": "{title}", "x": 74, "y": 150, "w": 149, "size": 23.8, "font": "mincho-bold", "align": "left", "color": "#222222", "leading": 33.6, "anchor": "bottom"}, {"content": "{subtitle}", "x": 74, "y": 160.5, "w": 149, "size": 11.9, "font": "sans", "align": "left", "color": "#8a8a8a", "leading": 18.2}], "nombre": false, "cover_block": true}, "back-cover": {"label": "裏表紙・クレジットのみ", "slots": 0, "page_side": "any", "gutter": false, "images": [], "texts": [{"content": "{credit}", "x": 24, "y": 192, "w": 249, "size": 8, "font": "sans", "align": "center", "color": "#8a8a8a", "leading": 13}], "nombre": false}, "text": {"label": "テキストのみ（扉・あとがき）", "slots": 0, "page_side": "any", "gutter": true, "images": [], "texts": [{"content": "{caption}", "x": 44, "y": 60, "w": 209, "size": 10, "font": "mincho", "align": "left", "color": "#222222", "leading": 21}]}, "blank": {"label": "白ページ（ページ数調整用）", "slots": 0, "page_side": "any", "gutter": true, "images": [], "texts": [], "nombre": false}, "back-cover-fill": {"label": "裏表紙・全面写真＋白抜きクレジット", "slots": 1, "page_side": "any", "gutter": false, "nombre": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 287, "h": 200, "fit": "cover"}], "texts": [{"content": "{credit}", "x": 20, "y": 190, "w": 257, "size": 8.5, "font": "sans", "align": "left", "color": "#ffffff", "leading": 13}]}, "back-cover-photo": {"label": "裏表紙・小さな写真＋クレジット", "slots": 1, "page_side": "any", "gutter": false, "nombre": false, "images": [{"slot": 0, "x": 99, "y": 38, "w": 99, "h": 90, "fit": "cover"}], "texts": [{"content": "{credit}", "x": 44, "y": 160, "w": 209, "size": 8, "font": "sans", "align": "center", "color": "#8a8a8a", "leading": 13}]}, "duo-fill-h": {"label": "⑥ 写真2枚・左右ぴったり・ページいっぱい", "slots": 2, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 143.5, "h": 200, "fit": "cover"}, {"slot": 1, "x": 148.5, "y": 5, "w": 143.5, "h": 200, "fit": "cover"}], "texts": []}, "duo-fill-v": {"label": "⑦ 写真2枚・上下ぴったり・ページいっぱい", "slots": 2, "page_side": "any", "gutter": false, "images": [{"slot": 0, "x": 5, "y": 5, "w": 287, "h": 100, "fit": "cover"}, {"slot": 1, "x": 5, "y": 105, "w": 287, "h": 100, "fit": "cover"}], "texts": []}}, "rotate_pairs": {"landscape-one": "portrait-one", "landscape-wide": "portrait-fill", "landscape-duo": "portrait-duo", "landscape-full": "portrait-full"}, "rotate_pairs_landscape": {"land-tall": "land-one"}}</script>
 <script>!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"function"==typeof define&&define.amd?define(["exports"],e):e((t=t||self).PDFLib={})}(this,(function(t){"use strict";
 /*! *****************************************************************************
@@ -507,6 +522,7 @@ const S = {
   pickPhotos: false, markedPhotos: new Set(),                 // 写真トレイの複数選択
   prev: [], prevAt: 0,                                        // 見開きプレビュー
   infoOpen: false,                                            // 「本の情報」を開いているか
+  picker: null,                                               // 写真を選ぶ一覧を開いている枠
 };
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -659,9 +675,22 @@ function fitBox(sw, sh, fw, fh, mode, adj) {
   return { drawW: sw * s, drawH: sh * s, sx: 0, sy: 0, sw, sh };
 }
 
+/** その枠の回転角。枠ごとの指定があればそれ、無ければページ全体の指定に従う。
+    2枚組の版面では写真ごとに向きを変えたいので、枠ごとに持てるようにしてある。 */
+function slotRotation(pg, slot) {
+  const r = pg && pg.rots && pg.rots[slot];
+  return r == null ? pageRotation(pg) : norm360(r);
+}
+
+function setSlotRot(pg, slot, deg) {
+  pg.rots = pg.rots || [];
+  pg.rots[slot] = norm360(deg);          // 0も明示的に持つ（ページ指定を打ち消すため）
+}
+
 /** 回転と src_crop を適用したあとの元画像。drawPage と当たり判定で同じものを使う */
 function preparedSrc(p, pg, fr) {
-  return cropSrc(applyRotate(p.prev, pg.rotate || fr.rotate), fr.src_crop);
+  const slot = fr.slot || 0;
+  return cropSrc(applyRotate(p.prev, slotRotation(pg, slot) || fr.rotate), fr.src_crop);
 }
 
 /** ページ上の位置(mm)にある、切り抜きを動かせる枠を返す */
@@ -1075,6 +1104,23 @@ function bindCropDrag(cv, i) {
   };
 }
 
+function togglePicker(slot) {
+  S.picker = (S.picker === slot) ? null : slot;
+  renderIns();
+}
+
+function choosePhoto(slot, idx) {
+  const q = S.photos[idx]; if (!q) return;
+  S.picker = null;
+  setPhoto(slot, q.name);            // setPhoto の中で renderIns まで走る
+}
+
+function rotateSlot(slot, step) {
+  const pg = S.pages[S.sel]; if (!pg) return;
+  setSlotRot(pg, slot, slotRotation(pg, slot) + step);
+  renderIns(); touch(false);
+}
+
 function setZoom(slot, pct) {
   const pg = S.pages[S.sel]; if (!pg) return;
   setCrop(pg, slot, { ...cropOf(pg, slot), z: Math.max(1, pct / 100) });
@@ -1087,6 +1133,7 @@ function setZoom(slot, pct) {
 function resetCrop(slot) {
   const pg = S.pages[S.sel]; if (!pg) return;
   clearCrop(pg, slot);
+  if (pg.rots) { delete pg.rots[slot]; if (!pg.rots.some(v => v != null)) delete pg.rots; }
   renderIns(); touch(false);
 }
 
@@ -1096,6 +1143,15 @@ const RHYTHM = {
   simple: ['big', 'one', 'one', 'duo', 'one', 'big', 'one', 'duo'],
   portrait: ['fill', 'one', 'one', 'fill', 'one', 'one'],
 };
+
+/** 2枚組の分割の向きを、写真の縦横から選ぶ。
+    半分の枠の縦横比に近いほうを採る（切り抜かれる量が少なくて済む）。 */
+function duoTemplate(a, b) {
+  const half = k => { const f = T[k] && T[k].images[0]; return f ? f.w / f.h : 1; };
+  const ar = ((a.w / a.h) + (b.w / b.h)) / 2;
+  const near = k => Math.abs(Math.log(ar / half(k)));
+  return near('duo-fill-v') <= near('duo-fill-h') ? 'duo-fill-v' : 'duo-fill-h';
+}
 
 /** ページいっぱいの1枚。ページと向きの違う写真は90°回して合わせる */
 function fillPage(p) {
@@ -1112,7 +1168,18 @@ function autoPlan(mode) {
   const pages = [{ template: CFG.cover_template || 'cover', photos: [ph[0].name] },
                  { template: 'blank' }];
   const q = ph.slice(1);
-  if (ORIENT_NAME === 'landscape') {
+  if (mode === 'duo') {
+    /* 2枚ずつ、隙間なく接する版面に置く。写真が1枚余ったら全面1枚に。
+       版面(T)は向きごとに切り替わっているので、縦横どちらでもこの1本で足りる */
+    while (q.length) {
+      if (q.length >= 2) {
+        const a = q.shift(), b = q.shift();
+        pages.push({ template: duoTemplate(a, b), photos: [a.name, b.name], caption: '', caption2: '' });
+      } else {
+        pages.push(fillPage(q.shift()));
+      }
+    }
+  } else if (ORIENT_NAME === 'landscape') {
     /* 横ページ。使える版面が縦とは別なので、ここで分ける */
     const R = { fill: ['fill'], portrait: ['fill', 'one', 'one', 'fill', 'one', 'one'],
                 simple: ['fill', 'one', 'one', 'duo', 'one', 'fill', 'one', 'duo'] };
@@ -1634,13 +1701,6 @@ function renderTray() {
     const name = S.photos[+el.dataset.i].name;
     el.onclick = () => {
       if (S.pickPhotos) return markPhoto(name);
-      if (ASSIGN) {
-        const { page, slot } = ASSIGN;
-        ASSIGN = null;
-        assignPhotoToPage(page, name, slot);
-        if (NARROW()) setTab('ins');
-        return;
-      }
       addPage(name);
     };
     el.draggable = !S.pickPhotos;
@@ -1663,12 +1723,6 @@ function renderTray() {
   }
   const bar = $('#photoActions');
   if (!bar) return;
-  if (ASSIGN) {
-    bar.style.display = '';
-    bar.innerHTML = `<span class="mini">${ASSIGN.page + 1}ページ目に入れる写真をタップ</span>
-      <button onclick="cancelAssign()">やめる</button>`;
-    return;
-  }
   if (!S.pickPhotos) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
   const k = S.markedPhotos.size;
   bar.style.display = '';
@@ -1696,19 +1750,6 @@ function clearDropMarks() {
 }
 
 function endDrag() { DRAG.kind = null; DRAG.from = -1; DRAG.to = -1; DRAG.photo = null; clearDropMarks(); }
-
-/* 「この枠に入れる写真を選ぶ」状態。ドラッグの使えないタッチ用 */
-let ASSIGN = null;                 // { page, slot }
-
-function startAssign(slot) {
-  if (S.sel < 0) return;
-  ASSIGN = { page: S.sel, slot };
-  if (NARROW()) setTab('photos');
-  renderTray();
-  toast('入れる写真をタップしてください');
-}
-
-function cancelAssign() { ASSIGN = null; renderTray(); }
 
 /** トレイから落とされた写真をページへ入れる。
     空きスロットがあればそこへ、無ければ1枚目を差し替える。
@@ -1881,20 +1922,35 @@ function buildIns() {
     const fr = (t.images || []).find(f => (f.slot || 0) === s);
     const cropable = fr && (fr.fit || 'contain') === 'cover' && p;
     const cz = Math.round(cropOf(pg, s).z * 100);
+    const deg = slotRotation(pg, s);
+    const multi = (t.slots || 0) > 1;
     slots.push(`<div class="slot">
-      <img src="${p ? p.thumb : ''}" alt="" class="pick" onclick="startAssign(${s})"
+      <img src="${p ? p.thumb : ''}" alt="" class="pick" onclick="togglePicker(${s})"
            title="タップして写真を選ぶ">
-      <select onchange="setPhoto(${s},this.value)">
-        <option value="">— 選ぶ —</option>
-        ${S.photos.map(q => `<option ${q.name === cur ? 'selected' : ''}>${esc(q.name)}</option>`).join('')}
-      </select></div>
-      ${cropable ? `<div class="cropRow">
-        <span class="u">拡大</span>
-        <input type="range" min="100" max="300" step="5" value="${cz}"
-          oninput="setZoom(${s},+this.value)" title="拡大率">
-        <span class="u zl" id="zl${s}">${cz}%</span>
-        <button class="tiny" onclick="resetCrop(${s})" title="中央・等倍に戻す">戻す</button>
-      </div>` : ''}`);
+      <button class="photoBtn" onclick="togglePicker(${s})">
+        ${p ? esc(cur) : '写真を選ぶ'}<span class="cv">▾</span></button>
+    </div>
+    ${S.picker === s ? `<div class="pickGrid">
+        ${S.photos.length
+          ? S.photos.map((q, qi) => `<figure class="${q.name === cur ? 'on' : ''}"
+              onclick="choosePhoto(${s},${qi})" title="${esc(q.name)}">
+              <img src="${q.thumb}" alt=""></figure>`).join('')
+          : '<p class="hint">先に写真を読み込んでください</p>'}
+      </div>` : ''}
+    ${multi ? `<div class="cropRow">
+      <button class="tiny rot" onclick="rotateSlot(${s},-90)" title="左に90°回す">↺</button>
+      <span class="u zl">${deg}°</span>
+      <button class="tiny rot" onclick="rotateSlot(${s},90)" title="右に90°回す">↻</button>
+      <span class="spacer"></span>
+      <button class="tiny" onclick="resetCrop(${s})" title="切り抜きと回転を戻す">戻す</button>
+    </div>` : ''}
+    ${cropable ? `<div class="cropRow">
+      <span class="u">拡大</span>
+      <input type="range" min="100" max="300" step="5" value="${cz}"
+        oninput="setZoom(${s},+this.value)" title="拡大率">
+      <span class="u zl" id="zl${s}">${cz}%</span>
+      ${multi ? '' : `<button class="tiny" onclick="resetCrop(${s})" title="切り抜きと回転を戻す">戻す</button>`}
+    </div>` : ''}`);
   }
   el.innerHTML = `
     <h2>${i + 1}ページ目（${ORIENT_NAME === 'landscape'
@@ -1905,6 +1961,7 @@ function buildIns() {
     <div class="field" style="margin-top:12px">
       <label>版面</label><select onchange="setTpl(this.value)">${opts}</select>
     </div>
+    ${(t.slots || 0) > 1 ? '' : `
     <h2>回転</h2>
     <div class="rotRow">
       <button onclick="rotatePage(-90)" title="左に90°回す">↺</button>
@@ -1914,7 +1971,7 @@ function buildIns() {
       <button class="tiny" onclick="rotateReset()" ${pageRotation(pg) ? '' : 'disabled'}>戻す</button>
     </div>
     <p class="hint">押すたびに90°ずつ回ります。90°と270°のときは、版面も
-      縦向きのものへ自動で入れ替えます。</p>
+      縦向きのものへ自動で入れ替えます。</p>`}
     ${(() => {
       const fs = textFieldsOf(t);
       if (!fs.length) return '';
@@ -1963,7 +2020,7 @@ function touch(all) {
   renderCount();
 }
 
-function setTpl(v) { S.pages[S.sel].template = v; renderIns(); touch(false); }
+function setTpl(v) { S.pages[S.sel].template = v; S.picker = null; renderIns(); touch(false); }
 
 /* このページで {title} などを出すかどうか。切ったものを pg.hide に貯める */
 function setShowText(k, show) {
@@ -2062,7 +2119,7 @@ async function buildPageOps(pg, pageNo, dpi, quality) {
     const boxH = Math.max(1, Math.round(fr.h / 25.4 * dpi));
     const need = Math.round(Math.max(boxW, boxH) * ((fr.fit === 'cover' || fr.src_crop) ? 1.9 : 1.15));
     let src = await decodeAt(p, need, need);
-    src = applyRotate(src, pg.rotate || fr.rotate);
+    src = applyRotate(src, slotRotation(pg, fr.slot || 0) || fr.rotate);
     src = cropSrc(src, fr.src_crop);
     const f = fitBox(src.width, src.height, fr.w, fr.h, fr.fit || 'contain',
                      cropOf(pg, fr.slot || 0));
