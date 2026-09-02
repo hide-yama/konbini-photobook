@@ -1389,10 +1389,13 @@ function clearMarkedPages() {
   renderGrid(); renderIns();
 }
 
+/* 一括操作を1回やったら選択モードを抜ける。
+   選択が空のままモードだけ残ると、何もできない状態に見えるため。 */
 function delMarkedPages() {
   const k = S.markedPages.size; if (!k) return;
   S.pages = S.pages.filter((_, i) => !S.markedPages.has(i));
   S.markedPages.clear(); S.lastMark = null; S.sel = -1;
+  S.pickPages = false;
   renderAll();
   toast(`${k}ページを削除しました`);
 }
@@ -1402,6 +1405,7 @@ function dupMarkedPages() {
   if (!idx.length) return;
   for (const i of idx) S.pages.splice(i + 1, 0, JSON.parse(JSON.stringify(S.pages[i])));
   S.markedPages.clear(); S.lastMark = null;
+  S.pickPages = false;
   renderAll();
   toast(`${idx.length}ページを複製しました`);
 }
@@ -1435,6 +1439,7 @@ function delMarkedPhotos() {
   }
   S.photos = S.photos.filter(p => !names.has(p.name));
   S.markedPhotos.clear();
+  S.pickPhotos = false;
   renderAll();
   toast(used ? `${names.size}枚を削除（${used}ページの写真が空きました）`
              : `${names.size}枚を削除しました`);
