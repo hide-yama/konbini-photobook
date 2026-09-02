@@ -39,7 +39,8 @@ async function buildPageOps(pg, pageNo, dpi, quality) {
     let src = await decodeAt(p, need, need);
     src = applyRotate(src, pg.rotate || fr.rotate);
     src = cropSrc(src, fr.src_crop);
-    const f = fitBox(src.width, src.height, fr.w, fr.h, fr.fit || 'contain');
+    const f = fitBox(src.width, src.height, fr.w, fr.h, fr.fit || 'contain',
+                     cropOf(pg, fr.slot || 0));
     const outW = Math.max(1, Math.round(f.drawW / 25.4 * dpi));
     const outH = Math.max(1, Math.round(f.drawH / 25.4 * dpi));
     const c = document.createElement('canvas');

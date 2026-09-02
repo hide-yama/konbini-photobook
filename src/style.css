@@ -267,3 +267,10 @@ body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
 
 .styleRow input.op{flex:1 1 auto;min-width:0;padding:0;height:20px}
 .field .toggle{margin-bottom:6px}
+
+/* 切り抜きの調整 */
+#insPrev.cropable{cursor:grab}
+#insPrev.cropable:active{cursor:grabbing}
+.cropRow{display:flex;align-items:center;gap:6px;margin:-2px 0 8px}
+.cropRow input[type=range]{flex:1 1 auto;min-width:0;padding:0;height:20px}
+.cropRow .zl{min-width:34px;text-align:right;font-variant-numeric:tabular-nums}

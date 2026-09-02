@@ -226,15 +226,60 @@ function textTopMm(ts, r) {
 }
 
 /** 枠に収めたときの実寸(mm)と、切り出し矩形を返す */
-function fitBox(sw, sh, fw, fh, mode) {
+/* 切り抜きの調整。z=拡大率（1が枠にちょうど）、x/y=枠の中心に来る元画像の位置（0〜1） */
+const CROP0 = { z: 1, x: 0.5, y: 0.5 };
+const cropOf = (pg, slot) => (pg && pg.crops && pg.crops[slot]) || CROP0;
+
+function setCrop(pg, slot, v) {
+  pg.crops = pg.crops || [];
+  pg.crops[slot] = v;
+}
+
+function clearCrop(pg, slot) {
+  if (!pg || !pg.crops) return;
+  delete pg.crops[slot];
+  if (!pg.crops.some(v => v)) delete pg.crops;
+}
+
+/** 枠に収めたときの実寸(mm)と、元画像から切り出す矩形を返す。
+    adj で拡大率と中心をずらせる。枠から画像がはみ出さないよう端で止める。 */
+function fitBox(sw, sh, fw, fh, mode, adj) {
   if (mode === 'cover') {
-    const s = Math.max(fw / sw, fh / sh);
+    const z = Math.max(1, (adj && adj.z) || 1);
+    const s = Math.max(fw / sw, fh / sh) * z;
     const vw = fw / s, vh = fh / s;                 // 元画像から使う範囲
-    return { drawW: fw, drawH: fh, sx: (sw - vw) / 2, sy: (sh - vh) / 2, sw: vw, sh: vh };
+    const fx = (adj && adj.x != null) ? adj.x : 0.5;
+    const fy = (adj && adj.y != null) ? adj.y : 0.5;
+    const sx = Math.max(0, Math.min(sw - vw, fx * sw - vw / 2));
+    const sy = Math.max(0, Math.min(sh - vh, fy * sh - vh / 2));
+    return { drawW: fw, drawH: fh, sx, sy, sw: vw, sh: vh };
   }
   const s = Math.min(fw / sw, fh / sh);
   return { drawW: sw * s, drawH: sh * s, sx: 0, sy: 0, sw, sh };
 }
+
+/** 回転と src_crop を適用したあとの元画像。drawPage と当たり判定で同じものを使う */
+function preparedSrc(p, pg, fr) {
+  return cropSrc(applyRotate(p.prev, pg.rotate || fr.rotate), fr.src_crop);
+}
+
+/** ページ上の位置(mm)にある、切り抜きを動かせる枠を返す */
+function frameAt(pg, t, pageNo, mx, my) {
+  const { dx, dy } = gutterShift(t, pageNo);
+  for (const fr of (t.images || [])) {
+    if ((fr.fit || 'contain') !== 'cover') continue;       // contain は切り抜かないので対象外
+    const nm = (pg.photos || [])[fr.slot || 0];
+    if (!nm || !photoBy(nm)) continue;
+    const x0 = fr.x + dx, y0 = fr.y + dy;
+    if (mx >= x0 && mx <= x0 + fr.w && my >= y0 && my <= y0 + fr.h) return fr;
+  }
+  return null;
+}
+
+/** その版面に、切り抜きを動かせる枠があるか */
+const hasCropFrame = (pg, t) => !!(t && (t.images || []).some(fr =>
+  (fr.fit || 'contain') === 'cover' && (pg.photos || [])[fr.slot || 0] &&
+  photoBy((pg.photos || [])[fr.slot || 0])));
 
 /** ノド逃げ。縦ページは左右へ、横ページは上下へ逃がす。
     後ろ側のページ（右頁／下頁）はノドが手前側にあるので + へ動かす。 */
@@ -555,9 +600,9 @@ function drawPage(cv, pg, pageNo, pxPerMm) {
     const nm = list[fr.slot || 0];
     const p = nm && photoBy(nm);
     if (!p) continue;
-    let src = applyRotate(p.prev, pg.rotate || fr.rotate);
-    src = cropSrc(src, fr.src_crop);
-    const f = fitBox(src.width, src.height, fr.w, fr.h, fr.fit || 'contain');
+    const src = preparedSrc(p, pg, fr);
+    const f = fitBox(src.width, src.height, fr.w, fr.h, fr.fit || 'contain',
+                     cropOf(pg, fr.slot || 0));
     const ox = (fr.x + dx + (fr.w - f.drawW) / 2) * pxPerMm;
     const oy = (fr.y + dy + (fr.h - f.drawH) / 2) * pxPerMm;
     x.drawImage(src, f.sx, f.sy, f.sw, f.sh, ox, oy, f.drawW * pxPerMm, f.drawH * pxPerMm);
@@ -578,6 +623,70 @@ function drawPage(cv, pg, pageNo, pxPerMm) {
     x.drawImage(r.canvas, px, py);
   }
   x.strokeStyle = '#e2e2e0'; x.strokeRect(.5, .5, cv.width - 1, cv.height - 1);
+}
+
+/* ═══════════ 切り抜きの調整 ═══════════ */
+
+/** 右ペインのプレビューを、指やマウスでドラッグして切り抜き位置を動かす。
+    Pointer Events なのでマウスもタッチも同じ処理で扱える。 */
+function bindCropDrag(cv, i) {
+  const pg = S.pages[i], t = T[pg.template];
+  if (!t || !hasCropFrame(pg, t)) { cv.style.touchAction = ''; cv.classList.remove('cropable'); return; }
+  cv.style.touchAction = 'none';          // 触った指でページがスクロールしないように
+  cv.classList.add('cropable');
+  let st = null;
+
+  cv.onpointerdown = e => {
+    const r = cv.getBoundingClientRect();
+    const per = r.width / PW;                          // 画面px / mm
+    const fr = frameAt(pg, t, i + 1, (e.clientX - r.left) / per, (e.clientY - r.top) / per);
+    if (!fr) return;
+    const slot = fr.slot || 0;
+    const src = preparedSrc(photoBy(pg.photos[slot]), pg, fr);
+    const c = cropOf(pg, slot);
+    const sc = Math.max(fr.w / src.width, fr.h / src.height) * Math.max(1, c.z);
+    st = { fr, slot, per, sw: src.width, sh: src.height,
+           vw: fr.w / sc, vh: fr.h / sc,
+           px: e.clientX, py: e.clientY, fx: c.x, fy: c.y, z: c.z, moved: false };
+    cv.setPointerCapture(e.pointerId);
+  };
+
+  cv.onpointermove = e => {
+    if (!st) return;
+    const mmx = (e.clientX - st.px) / st.per, mmy = (e.clientY - st.py) / st.per;
+    if (!st.moved && Math.abs(mmx) + Math.abs(mmy) < 0.5) return;
+    st.moved = true;
+    /* 指の動きぶんだけ写真が動くよう、使う範囲を逆向きにずらす */
+    const fx = st.fx - (mmx / st.fr.w) * st.vw / st.sw;
+    const fy = st.fy - (mmy / st.fr.h) * st.vh / st.sh;
+    const hx = st.vw / (2 * st.sw), hy = st.vh / (2 * st.sh);
+    setCrop(pg, st.slot, { z: st.z,
+      x: Math.max(hx, Math.min(1 - hx, fx)),
+      y: Math.max(hy, Math.min(1 - hy, fy)) });
+    drawPage(cv, pg, i + 1, 2.6);        // 動かしている間はこの1枚だけ描き直す
+  };
+
+  cv.onpointerup = cv.onpointercancel = () => {
+    if (!st) return;
+    const moved = st.moved;
+    st = null;
+    if (moved) { renderGrid(); drawPreview(); }
+  };
+}
+
+function setZoom(slot, pct) {
+  const pg = S.pages[S.sel]; if (!pg) return;
+  setCrop(pg, slot, { ...cropOf(pg, slot), z: Math.max(1, pct / 100) });
+  const l = $(`#zl${slot}`); if (l) l.textContent = `${pct}%`;
+  const cv = $('#insPrev'); if (cv) drawPage(cv, pg, S.sel + 1, 2.6);
+  clearTimeout(setZoom._t);
+  setZoom._t = setTimeout(() => { renderGrid(); drawPreview(); }, 120);
+}
+
+function resetCrop(slot) {
+  const pg = S.pages[S.sel]; if (!pg) return;
+  clearCrop(pg, slot);
+  renderIns(); touch(false);
 }
 
 /* ═══════════ 台割 ═══════════ */
@@ -1203,6 +1312,7 @@ function assignPhotoToPage(i, name, slot) {
     let at = (slot != null && slot >= 0 && slot < slots) ? slot : pg.photos.findIndex(n => !n);
     if (at < 0) at = 0;
     pg.photos[at] = name;
+    clearCrop(pg, at);                  // 別の写真なので切り抜きは引き継がない
     /* 縦いっぱいの版面では「横写真だけ回す」という既定の規則をあてはめ直す。
        前の写真のための回転が残ったままだと、縦写真を入れたときに横倒しになる。 */
     if (slots === 1 && pg.template === FILL_TPL) {
@@ -1354,19 +1464,30 @@ function buildIns() {
   for (let s = 0; s < (t.slots || 0); s++) {
     const cur = (pg.photos || [])[s] || '';
     const p = photoBy(cur);
+    const fr = (t.images || []).find(f => (f.slot || 0) === s);
+    const cropable = fr && (fr.fit || 'contain') === 'cover' && p;
+    const cz = Math.round(cropOf(pg, s).z * 100);
     slots.push(`<div class="slot">
       <img src="${p ? p.thumb : ''}" alt="" class="pick" onclick="startAssign(${s})"
            title="タップして写真を選ぶ">
       <select onchange="setPhoto(${s},this.value)">
         <option value="">— 選ぶ —</option>
         ${S.photos.map(q => `<option ${q.name === cur ? 'selected' : ''}>${esc(q.name)}</option>`).join('')}
-      </select></div>`);
+      </select></div>
+      ${cropable ? `<div class="cropRow">
+        <span class="u">拡大</span>
+        <input type="range" min="100" max="300" step="5" value="${cz}"
+          oninput="setZoom(${s},+this.value)" title="拡大率">
+        <span class="u zl" id="zl${s}">${cz}%</span>
+        <button class="tiny" onclick="resetCrop(${s})" title="中央・等倍に戻す">戻す</button>
+      </div>` : ''}`);
   }
   el.innerHTML = `
     <h2>${i + 1}ページ目（${ORIENT_NAME === 'landscape'
         ? (isFarPage(i + 1) ? '下ページ' : '上ページ')
         : (isFarPage(i + 1) ? '右ページ' : '左ページ')}）</h2>
     <canvas id="insPrev"></canvas>
+    ${hasCropFrame(pg, t) ? `<p class="hint">プレビューを<b>ドラッグすると切り抜き位置</b>を動かせます。</p>` : ''}
     <div class="field" style="margin-top:12px">
       <label>版面</label><select onchange="setTpl(this.value)">${opts}</select>
     </div>
@@ -1413,6 +1534,7 @@ function buildIns() {
       <summary>本の情報（タイトル・クレジット）</summary>
       ${bookInfoFields()}</details>`;
   drawPage($('#insPrev'), pg, i + 1, 2.6);
+  bindCropDrag($('#insPrev'), i);
 }
 
 function touch(all) {
@@ -1467,7 +1589,9 @@ function rotateReset() {
 function setPhoto(i, v) {
   const pg = S.pages[S.sel]; pg.photos = pg.photos || [];
   while (pg.photos.length <= i) pg.photos.push('');
-  pg.photos[i] = v; renderIns(); touch(false);
+  pg.photos[i] = v;
+  clearCrop(pg, i);                     // 別の写真なので切り抜きは引き継がない
+  renderIns(); touch(false);
 }
 function setCap(k, v) { S.pages[S.sel][k] = v; clearTimeout(setCap._t);
   setCap._t = setTimeout(() => touch(false), 300); }
