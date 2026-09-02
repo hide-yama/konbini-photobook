@@ -88,7 +88,14 @@
   </div>
   <div class="foot">
     <button id="prevBack" onclick="previewGo(-1)" title="前へ（←）">◀ 前</button>
-    <span class="tip">← → でめくる ／ Esc で閉じる ／ 表紙と裏表紙は単独で表示されます</span>
+    <div class="mid">
+      <label class="jump">ページ
+        <input type="number" id="prevPage" min="1" step="1"
+          onchange="previewJump(this.value)" title="ページ番号を入れると、そのページへ飛びます">
+        <span class="of">/ <b id="prevTotal">–</b></span>
+      </label>
+      <span class="tip">← → でめくる ／ Esc で閉じる ／ 表紙と裏表紙は単独で表示されます</span>
+    </div>
     <button id="prevNext" onclick="previewGo(1)" title="次へ（→）">次 ▶</button>
   </div>
 </div>

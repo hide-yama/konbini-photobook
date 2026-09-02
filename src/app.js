@@ -694,10 +694,33 @@ function closePreview() {
 
 function previewKeys(e) {
   if (e.key === 'Escape') { closePreview(); return; }
+  /* ページ番号を打っている最中に、矢印やスペースでめくらない */
+  if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
   if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); previewGo(1); }
   if (e.key === 'ArrowLeft') { e.preventDefault(); previewGo(-1); }
   if (e.key === 'Home') previewGo(-1e9);
   if (e.key === 'End') previewGo(1e9);
+}
+
+/** 入力欄を、いま表示している見開きの先頭ページに戻す */
+function syncJumpInput() {
+  const inp = $('#prevPage'), sp = S.prev[S.prevAt];
+  if (inp && sp) inp.value = sp[0] + 1;
+}
+
+/** ページ番号を入れて、そのページを含む見開きへ飛ぶ。
+    範囲外は端に寄せ、空や0のような入力は現在のページに戻す。 */
+function previewJump(v) {
+  const n = S.pages.length;
+  let p = Math.round(+v);
+  if (!isFinite(p) || !p) { syncJumpInput(); return; }
+  p = Math.max(1, Math.min(n, p));
+  const k = S.prev.findIndex(sp => sp.includes(p - 1));
+  if (k < 0) { syncJumpInput(); return; }
+  S.prevAt = k;
+  const inp = $('#prevPage');
+  if (inp) inp.value = p;            // 99→20 のように直した番号を見せる
+  drawPreview(true);                 // 打った番号は上書きしない
 }
 
 function previewGo(d) {
@@ -705,7 +728,7 @@ function previewGo(d) {
   drawPreview();
 }
 
-function drawPreview() {
+function drawPreview(keepInput) {
   if (!$('#prev').classList.contains('on')) return;
   const sp = S.prev[S.prevAt];
   if (!sp) return;
@@ -741,6 +764,12 @@ function drawPreview() {
   $('#prevPos').textContent = `${label}　／　${unit} ${S.prevAt + 1} / ${S.prev.length}`;
   $('#prevBack').disabled = S.prevAt === 0;
   $('#prevNext').disabled = S.prevAt === S.prev.length - 1;
+  const inp = $('#prevPage'), tot = $('#prevTotal');
+  if (tot) tot.textContent = S.pages.length;
+  if (inp) {
+    inp.max = S.pages.length;
+    if (!keepInput) inp.value = nums[0];      // ボタンや矢印で動いたときだけ追従させる
+  }
 }
 
 /* ═══════════ 本の情報（タイトルなど） ═══════════ */
