@@ -157,8 +157,13 @@ button.tiny{padding:2px 8px;font-size:11px;border-radius:5px}
   transform:translateX(-50%);pointer-events:none;
   background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,.16) 42%,
     rgba(0,0,0,.20) 50%,rgba(0,0,0,.16) 58%,rgba(0,0,0,0))}
-#prev .foot{flex:0 0 auto;padding:9px 14px;text-align:center;font-size:11px;color:#8f8f86;
-  background:rgba(0,0,0,.22)}
+/* めくるボタンは下に固定する。ヘッダーに置くと狭い画面で折り返して位置が動く */
+#prev .foot{flex:0 0 auto;display:flex;align-items:center;gap:10px;
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));
+  background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.08)}
+#prev .foot .tip{flex:1 1 auto;min-width:0;text-align:center;font-size:11px;color:#8f8f86}
+#prev .foot button{flex:0 0 auto;min-width:92px;background:#3b3b34;border-color:#53534a;color:#f2f2ee}
+#prev .foot button:hover:not(:disabled){background:#4a4a42}
 
 details.info{margin-top:20px;border-top:1px solid var(--line);padding-top:12px}
 details.info summary{cursor:pointer;font-size:11px;letter-spacing:.06em;color:var(--dim);
@@ -226,9 +231,13 @@ body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
   #tabbar button.on{color:var(--accent);font-weight:700;
     box-shadow:inset 0 -2px 0 var(--accent)}
 
-  #prev .bar{flex-wrap:wrap;gap:6px;padding:8px 10px}
+  #prev .bar{gap:6px;padding:8px 10px}
+  #prev .pos{font-size:11px}
   #prev .stage{padding:12px}
-  #prev .foot{font-size:10px;padding:7px 10px}
+  /* 狭い画面では説明を隠し、ボタンを親指で押しやすい大きさにする */
+  #prev .foot{gap:8px;padding:9px 10px calc(9px + env(safe-area-inset-bottom,0px))}
+  #prev .foot .tip{display:none}
+  #prev .foot button{flex:1 1 0;min-width:0;padding:12px 0;font-size:13px}
   .sheet{width:100vw;max-height:100vh;border-radius:0}
   #toast{bottom:64px}
 }
@@ -333,14 +342,16 @@ body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
     <b>見開きプレビュー</b>
     <span id="prevPos" class="pos"></span>
     <span class="spacer"></span>
-    <button id="prevBack" onclick="previewGo(-1)" title="前へ（←）">◀ 前</button>
-    <button id="prevNext" onclick="previewGo(1)" title="次へ（→）">次 ▶</button>
     <button onclick="closePreview()" title="閉じる（Esc）">閉じる</button>
   </div>
   <div class="stage" onclick="if(event.target===this)closePreview()">
     <div class="spread" id="prevStage"></div>
   </div>
-  <div class="foot">← → でめくる ／ Esc で閉じる ／ 表紙と裏表紙は単独で表示されます</div>
+  <div class="foot">
+    <button id="prevBack" onclick="previewGo(-1)" title="前へ（←）">◀ 前</button>
+    <span class="tip">← → でめくる ／ Esc で閉じる ／ 表紙と裏表紙は単独で表示されます</span>
+    <button id="prevNext" onclick="previewGo(1)" title="次へ（→）">次 ▶</button>
+  </div>
 </div>
 
 <div id="toast"></div>

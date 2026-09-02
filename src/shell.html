@@ -81,14 +81,16 @@
     <b>見開きプレビュー</b>
     <span id="prevPos" class="pos"></span>
     <span class="spacer"></span>
-    <button id="prevBack" onclick="previewGo(-1)" title="前へ（←）">◀ 前</button>
-    <button id="prevNext" onclick="previewGo(1)" title="次へ（→）">次 ▶</button>
     <button onclick="closePreview()" title="閉じる（Esc）">閉じる</button>
   </div>
   <div class="stage" onclick="if(event.target===this)closePreview()">
     <div class="spread" id="prevStage"></div>
   </div>
-  <div class="foot">← → でめくる ／ Esc で閉じる ／ 表紙と裏表紙は単独で表示されます</div>
+  <div class="foot">
+    <button id="prevBack" onclick="previewGo(-1)" title="前へ（←）">◀ 前</button>
+    <span class="tip">← → でめくる ／ Esc で閉じる ／ 表紙と裏表紙は単独で表示されます</span>
+    <button id="prevNext" onclick="previewGo(1)" title="次へ（→）">次 ▶</button>
+  </div>
 </div>
 
 <div id="toast"></div>
