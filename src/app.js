@@ -610,10 +610,9 @@ function drawPage(cv, pg, pageNo, pxPerMm) {
   const t = T[pg.template];
   if (!t) { x.fillStyle = '#c00'; x.font = `${14 * pxPerMm / 3}px sans-serif`;
             x.fillText('不明な版面: ' + pg.template, 10, 24); return; }
-  /* このページを上下逆に刷る指定。要素の中身だけでなく、置く位置ごと回す。
-     中身だけ回すと、紙をひっくり返したときに上下の並びが入れ替わってしまう
-     （写真の下にあったはずの文字が上に来る）。 */
-  if (pg.flip) { x.translate(cv.width, cv.height); x.rotate(Math.PI); }
+  /* pg.flip（上下逆に刷る指定）は、ここでは効かせない。
+     画面には「めくったときに見える向き」を出し、反転はPDFを組むときだけ行う
+     （placeOps）。紙の上の向きは印刷の都合であって、確認したいのは仕上がりの姿。 */
 
   const { dx, dy } = gutterShift(t, pageNo);
   const list = pg.photos || [];
@@ -1588,7 +1587,8 @@ function buildIns() {
     </div>` : ''}`);
   }
   el.innerHTML = `
-    ${pg.flip ? '<p class="hint">このページは<b>上下逆に刷られます</b>（横ページの裏表紙）。紙をめくると天地が揃います。</p>' : ''}
+    ${pg.flip ? `<p class="hint">プレビューは<b>めくったときに見える向き</b>で表示しています。
+      紙には上下逆に刷られ、本を裏返すと表紙と天地が揃います（横ページの裏表紙）。</p>` : ''}
     <h2>${i + 1}ページ目（${ORIENT_NAME === 'landscape'
         ? (isFarPage(i + 1) ? '下ページ' : '上ページ')
         : (isFarPage(i + 1) ? '右ページ' : '左ページ')}）</h2>
