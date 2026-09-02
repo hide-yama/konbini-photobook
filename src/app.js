@@ -1468,7 +1468,7 @@ function buildIns() {
   const groups = { '標準': [], '表紙・その他': [], '応用': [] };
   for (const [k, v] of Object.entries(T)) {
     const g = v.label.startsWith('［応用］') ? '応用'
-            : (/^[①-⑧]/.test(v.label) ? '標準' : '表紙・その他');
+            : (/^[\u2460-\u2473]/.test(v.label) ? '標準' : '表紙・その他');
     groups[g].push(`<option value="${k}" ${k === pg.template ? 'selected' : ''}>${esc(v.label)}</option>`);
   }
   const opts = Object.entries(groups).filter(([, a]) => a.length)

@@ -953,6 +953,56 @@
           "leading": 13
         }
       ]
+    },
+    "duo-fill-v": {
+      "label": "⑨ 写真2枚・上下ぴったり・ページいっぱい",
+      "slots": 2,
+      "page_side": "any",
+      "gutter": false,
+      "images": [
+        {
+          "slot": 0,
+          "x": 5,
+          "y": 5,
+          "w": 200,
+          "h": 143.5,
+          "fit": "cover"
+        },
+        {
+          "slot": 1,
+          "x": 5,
+          "y": 148.5,
+          "w": 200,
+          "h": 143.5,
+          "fit": "cover"
+        }
+      ],
+      "texts": []
+    },
+    "duo-fill-h": {
+      "label": "⑩ 写真2枚・左右ぴったり・ページいっぱい",
+      "slots": 2,
+      "page_side": "any",
+      "gutter": false,
+      "images": [
+        {
+          "slot": 0,
+          "x": 5,
+          "y": 5,
+          "w": 100,
+          "h": 287,
+          "fit": "cover"
+        },
+        {
+          "slot": 1,
+          "x": 105,
+          "y": 5,
+          "w": 100,
+          "h": 287,
+          "fit": "cover"
+        }
+      ],
+      "texts": []
     }
   },
   "_templates_landscape": "横長ページ用の版面。座標は 297×210mm・原点は左上。縦用とは別物なので、片方を直したらもう片方も見ること。",
@@ -1292,6 +1342,56 @@
           "leading": 13
         }
       ]
+    },
+    "duo-fill-h": {
+      "label": "⑥ 写真2枚・左右ぴったり・ページいっぱい",
+      "slots": 2,
+      "page_side": "any",
+      "gutter": false,
+      "images": [
+        {
+          "slot": 0,
+          "x": 5,
+          "y": 5,
+          "w": 143.5,
+          "h": 200,
+          "fit": "cover"
+        },
+        {
+          "slot": 1,
+          "x": 148.5,
+          "y": 5,
+          "w": 143.5,
+          "h": 200,
+          "fit": "cover"
+        }
+      ],
+      "texts": []
+    },
+    "duo-fill-v": {
+      "label": "⑦ 写真2枚・上下ぴったり・ページいっぱい",
+      "slots": 2,
+      "page_side": "any",
+      "gutter": false,
+      "images": [
+        {
+          "slot": 0,
+          "x": 5,
+          "y": 5,
+          "w": 287,
+          "h": 100,
+          "fit": "cover"
+        },
+        {
+          "slot": 1,
+          "x": 5,
+          "y": 105,
+          "w": 287,
+          "h": 100,
+          "fit": "cover"
+        }
+      ],
+      "texts": []
     }
   },
   "_standard": "①〜⑤ が標準の5種類。cover / back-cover / text / blank は必須の付属。［応用］は使わなくてよい追加分。",
