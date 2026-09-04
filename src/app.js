@@ -455,24 +455,28 @@ function pageTexts(pg, t, pageNo) {
     const su = list.find(x => String(x.content).includes('{subtitle}'));
     list = list.map(x => (x === ti ? cv.title : (x === su && cv.subtitle ? cv.subtitle : x)));
   }
+  /* ノンブルはページの回転に付き合わせない（fixed:true）。
+     写真を回すのは中身の都合で、紙のどこに何ページ目と刷るかは本の都合。
+     回すと文字が横倒しになるうえ、y から高さを引く分だけ位置まで動いてしまう。 */
   if (CFG.page_numbers && pageNo >= (CFG.page_number_start || 3) && t.nombre !== false) {
     const sm = CFG.safe_margin_mm || 7;
     const k = PH / ORIENT[ORIENT_NAME].design[1], far = isFarPage(pageNo);
     if (ORIENT_NAME === 'landscape') {
       /* 小口は上下。下頁なら下、上頁なら上に置く */
       list.push({ content: '{pageno}', x: PW / 2 - 10 * k, y: far ? PH - sm : sm + 6 * k,
-                  w: 20 * k, size: 7.5 * k, font: 'sans', align: 'center', color: '#999999' });
+                  w: 20 * k, size: 7.5 * k, font: 'sans', align: 'center', color: '#999999',
+                  fixed: true });
     } else {
       list.push({ content: '{pageno}', x: far ? PW - sm - 20 * k : sm, y: PH - 6 * k,
                   w: 20 * k, size: 7.5 * k, font: 'sans', align: far ? 'right' : 'left',
-                  color: '#999999' });
+                  color: '#999999', fixed: true });
     }
   }
   for (let ts of list) {
     const raw = String(ts.content || '');
     ts = withChosenFont(ts, raw);
     const pdeg = pageRotation(pg);
-    if (pdeg && !ts.rotate) ts = { ...ts, rotate: (360 - pdeg) % 360 };
+    if (pdeg && !ts.rotate && !ts.fixed) ts = { ...ts, rotate: (360 - pdeg) % 360 };
     let s = raw;
     for (const k in vals) s = s.split('{' + k + '}').join(vals[k]);
     if (s.trim()) out.push({ ...ts, text: s });
@@ -869,7 +873,8 @@ function autoPlan(mode) {
   if ((T[backTpl] || {}).slots) back.photos = [backName];
   if (ORIENT_NAME === 'landscape' && CFG.back_cover_flip !== false) back.flip = true;
   pages.push(back);
-  while (pages.length % 4) pages.splice(pages.length - 1, 0, { template: 'blank' });
+  /* 4の倍数への白ページ埋めは、ここではやらない。読み込んだ写真の分だけ組む。
+     足りない枚数は renderCount() が数字で出すので、必要なら手で足してもらう。 */
   S.pages = pages; S.sel = -1;
   renderAll();
 }
@@ -1322,8 +1327,8 @@ function setTab(name) {
 function renderAll() { renderTray(); renderGrid(); renderIns(); renderCount(); }
 
 function renderCount() {
-  const n = S.pages.length, r = n % 4, need = r ? 4 - r : 0;
-  const el = $('#count'), pad = $('#padBtn'), btn = $('#buildBtn');
+  const n = S.pages.length, need = blanksNeeded(n);
+  const el = $('#count'), btn = $('#buildBtn');
   const pv = $('#prevBtn');
   if (pv) pv.disabled = !n;
   const pick = $('#pickBtn');
@@ -1332,25 +1337,34 @@ function renderCount() {
     pick.classList.toggle('on', S.pickPages);
     pick.disabled = !n;
   }
-  if (!n) { el.textContent = '0ページ'; el.className = 'bad'; pad.style.display = 'none';
-            btn.disabled = true; return; }
+  if (!n) { el.textContent = '0ページ'; el.className = 'bad'; btn.disabled = true; return; }
   if (need) {
-    el.textContent = `${n}ページ・あと${need}ページで4の倍数`;
-    el.className = 'bad';
-    pad.textContent = `白ページを${need}枚足す`; pad.style.display = '';
-    btn.disabled = true;
+    /* 編集中は登録した分だけを見せる。4の倍数への白ページ埋めは
+       「PDFを作る」を押したときに padBlanks() が自動でやるので、ここでは予告だけ。 */
+    el.textContent = `${n}ページ・書き出し時に白ページを${need}枚補います`;
+    el.className = 'warn';
+    el.title = `中綴じは紙1枚＝4ページ。白ページは裏表紙の手前に入るので、裏表紙は最後のままです`;
   } else {
     el.textContent = `${n}ページ・${BOOK[BOOK_NAME].paper}×${n / 4}枚`;
     el.title = `${BOOK_NAME}${ORIENT[ORIENT_NAME].label} ／ 店頭で ${ORIENT[ORIENT_NAME].toji(CFG.binding)}`;
-    el.className = ''; pad.style.display = 'none'; btn.disabled = false;
+    el.className = '';
   }
+  btn.disabled = false;
 }
 
+/** 4の倍数まであと何ページ足りないか */
+function blanksNeeded(n) { const r = n % 4; return r ? 4 - r : 0; }
+
+/** 不足分を白ページで埋める。入れるのは**裏表紙の手前**。
+    末尾に足すと（＝機械に切り上げさせると）裏表紙が冊子の中ほどに刷られ、
+    物理的な裏表紙が白紙になってしまう。 */
 function padBlanks() {
-  const r = S.pages.length % 4; if (!r) return;
+  const need = blanksNeeded(S.pages.length); if (!need) return 0;
   const at = Math.max(0, S.pages.length - 1);
-  for (let i = 0; i < 4 - r; i++) S.pages.splice(at, 0, { template: 'blank' });
-  renderGrid(); renderCount();
+  for (let i = 0; i < need; i++) S.pages.splice(at, 0, { template: 'blank' });
+  if (S.markedPages) S.markedPages.clear();     // 添字がずれる
+  renderGrid(); renderIns(); renderCount();
+  return need;
 }
 
 function renderTray() {

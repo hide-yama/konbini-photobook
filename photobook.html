@@ -30,6 +30,8 @@ header h1{font-size:14px;margin:0 8px 0 0;font-weight:700;letter-spacing:.02em;w
 .spacer{flex:1}
 #count{font-weight:600;padding:4px 12px;border-radius:20px;background:var(--okbg);white-space:nowrap}
 #count.bad{background:var(--warnbg);color:var(--warn)}
+/* 書き出し時に白ページを補う予告。エラーではないので枠線だけ控えめに */
+#count.warn{background:transparent;color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn);font-weight:500}
 #progress{font-size:12px;color:var(--dim);white-space:nowrap}
 .mini{font-size:11px;color:var(--dim)}
 
@@ -323,7 +325,6 @@ body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
   <span id="progress" style="display:none"></span>
   <span class="spacer"></span>
   <span id="count">—</span>
-  <button id="padBtn" onclick="padBlanks()" style="display:none"></button>
   <button class="primary" id="buildBtn" onclick="exportPDF()" disabled>PDFを作る</button>
 </header>
 
@@ -883,24 +884,28 @@ function pageTexts(pg, t, pageNo) {
     const su = list.find(x => String(x.content).includes('{subtitle}'));
     list = list.map(x => (x === ti ? cv.title : (x === su && cv.subtitle ? cv.subtitle : x)));
   }
+  /* ノンブルはページの回転に付き合わせない（fixed:true）。
+     写真を回すのは中身の都合で、紙のどこに何ページ目と刷るかは本の都合。
+     回すと文字が横倒しになるうえ、y から高さを引く分だけ位置まで動いてしまう。 */
   if (CFG.page_numbers && pageNo >= (CFG.page_number_start || 3) && t.nombre !== false) {
     const sm = CFG.safe_margin_mm || 7;
     const k = PH / ORIENT[ORIENT_NAME].design[1], far = isFarPage(pageNo);
     if (ORIENT_NAME === 'landscape') {
       /* 小口は上下。下頁なら下、上頁なら上に置く */
       list.push({ content: '{pageno}', x: PW / 2 - 10 * k, y: far ? PH - sm : sm + 6 * k,
-                  w: 20 * k, size: 7.5 * k, font: 'sans', align: 'center', color: '#999999' });
+                  w: 20 * k, size: 7.5 * k, font: 'sans', align: 'center', color: '#999999',
+                  fixed: true });
     } else {
       list.push({ content: '{pageno}', x: far ? PW - sm - 20 * k : sm, y: PH - 6 * k,
                   w: 20 * k, size: 7.5 * k, font: 'sans', align: far ? 'right' : 'left',
-                  color: '#999999' });
+                  color: '#999999', fixed: true });
     }
   }
   for (let ts of list) {
     const raw = String(ts.content || '');
     ts = withChosenFont(ts, raw);
     const pdeg = pageRotation(pg);
-    if (pdeg && !ts.rotate) ts = { ...ts, rotate: (360 - pdeg) % 360 };
+    if (pdeg && !ts.rotate && !ts.fixed) ts = { ...ts, rotate: (360 - pdeg) % 360 };
     let s = raw;
     for (const k in vals) s = s.split('{' + k + '}').join(vals[k]);
     if (s.trim()) out.push({ ...ts, text: s });
@@ -1297,7 +1302,8 @@ function autoPlan(mode) {
   if ((T[backTpl] || {}).slots) back.photos = [backName];
   if (ORIENT_NAME === 'landscape' && CFG.back_cover_flip !== false) back.flip = true;
   pages.push(back);
-  while (pages.length % 4) pages.splice(pages.length - 1, 0, { template: 'blank' });
+  /* 4の倍数への白ページ埋めは、ここではやらない。読み込んだ写真の分だけ組む。
+     足りない枚数は renderCount() が数字で出すので、必要なら手で足してもらう。 */
   S.pages = pages; S.sel = -1;
   renderAll();
 }
@@ -1750,8 +1756,8 @@ function setTab(name) {
 function renderAll() { renderTray(); renderGrid(); renderIns(); renderCount(); }
 
 function renderCount() {
-  const n = S.pages.length, r = n % 4, need = r ? 4 - r : 0;
-  const el = $('#count'), pad = $('#padBtn'), btn = $('#buildBtn');
+  const n = S.pages.length, need = blanksNeeded(n);
+  const el = $('#count'), btn = $('#buildBtn');
   const pv = $('#prevBtn');
   if (pv) pv.disabled = !n;
   const pick = $('#pickBtn');
@@ -1760,25 +1766,34 @@ function renderCount() {
     pick.classList.toggle('on', S.pickPages);
     pick.disabled = !n;
   }
-  if (!n) { el.textContent = '0ページ'; el.className = 'bad'; pad.style.display = 'none';
-            btn.disabled = true; return; }
+  if (!n) { el.textContent = '0ページ'; el.className = 'bad'; btn.disabled = true; return; }
   if (need) {
-    el.textContent = `${n}ページ・あと${need}ページで4の倍数`;
-    el.className = 'bad';
-    pad.textContent = `白ページを${need}枚足す`; pad.style.display = '';
-    btn.disabled = true;
+    /* 編集中は登録した分だけを見せる。4の倍数への白ページ埋めは
+       「PDFを作る」を押したときに padBlanks() が自動でやるので、ここでは予告だけ。 */
+    el.textContent = `${n}ページ・書き出し時に白ページを${need}枚補います`;
+    el.className = 'warn';
+    el.title = `中綴じは紙1枚＝4ページ。白ページは裏表紙の手前に入るので、裏表紙は最後のままです`;
   } else {
     el.textContent = `${n}ページ・${BOOK[BOOK_NAME].paper}×${n / 4}枚`;
     el.title = `${BOOK_NAME}${ORIENT[ORIENT_NAME].label} ／ 店頭で ${ORIENT[ORIENT_NAME].toji(CFG.binding)}`;
-    el.className = ''; pad.style.display = 'none'; btn.disabled = false;
+    el.className = '';
   }
+  btn.disabled = false;
 }
 
+/** 4の倍数まであと何ページ足りないか */
+function blanksNeeded(n) { const r = n % 4; return r ? 4 - r : 0; }
+
+/** 不足分を白ページで埋める。入れるのは**裏表紙の手前**。
+    末尾に足すと（＝機械に切り上げさせると）裏表紙が冊子の中ほどに刷られ、
+    物理的な裏表紙が白紙になってしまう。 */
 function padBlanks() {
-  const r = S.pages.length % 4; if (!r) return;
+  const need = blanksNeeded(S.pages.length); if (!need) return 0;
   const at = Math.max(0, S.pages.length - 1);
-  for (let i = 0; i < 4 - r; i++) S.pages.splice(at, 0, { template: 'blank' });
-  renderGrid(); renderCount();
+  for (let i = 0; i < need; i++) S.pages.splice(at, 0, { template: 'blank' });
+  if (S.markedPages) S.markedPages.clear();     // 添字がずれる
+  renderGrid(); renderIns(); renderCount();
+  return need;
 }
 
 function renderTray() {
@@ -2306,8 +2321,10 @@ function placeOps(page, ops, embeds, flip) {
 
 /* ── 本体 ── */
 async function exportPDF() {
+  /* 中綴じは紙1枚＝4ページ。半端なまま渡すと機械が末尾で切り上げるので、
+     裏表紙が冊子の中ほどに刷られてしまう。ここで裏表紙の手前へ白ページを入れておく。 */
+  const padded = padBlanks();
   const n = S.pages.length;
-  if (n % 4) { toast('ページ数が4の倍数ではありません'); return; }
   /* 画面には出していない。既定は usb（容量無制限）＝最高品質のまま1本にする。
      ネットプリントで通したいときだけ config.json の delivery を変える。 */
   const route = CFG.delivery || 'usb';
@@ -2370,6 +2387,10 @@ async function exportPDF() {
   } else {
     note = `<p class="ok">★ 全${n}ページを1本にまとめました（${whole.toFixed(1)} MB ／ ${dpi}dpi・品質${q}）<br>
       面付けはマルチコピー機の<b>小冊子プリント</b>がやります。このまま持って行ってください。</p>`;
+  }
+  if (padded) {
+    note += `<p class="warn">※ 中綴じは紙1枚＝4ページなので、白ページを${padded}枚<b>裏表紙の手前</b>に
+      入れて${n}ページにしました。台割にも反映してあります。</p>`;
   }
   if (n > MAX_PAGES) {
     note += `<p class="warn">※ ${n}ページあります。マルチコピー機は一度に${MAX_PAGES}ページまでです。</p>`;

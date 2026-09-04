@@ -125,8 +125,10 @@ function placeOps(page, ops, embeds, flip) {
 
 /* ── 本体 ── */
 async function exportPDF() {
+  /* 中綴じは紙1枚＝4ページ。半端なまま渡すと機械が末尾で切り上げるので、
+     裏表紙が冊子の中ほどに刷られてしまう。ここで裏表紙の手前へ白ページを入れておく。 */
+  const padded = padBlanks();
   const n = S.pages.length;
-  if (n % 4) { toast('ページ数が4の倍数ではありません'); return; }
   /* 画面には出していない。既定は usb（容量無制限）＝最高品質のまま1本にする。
      ネットプリントで通したいときだけ config.json の delivery を変える。 */
   const route = CFG.delivery || 'usb';
@@ -189,6 +191,10 @@ async function exportPDF() {
   } else {
     note = `<p class="ok">★ 全${n}ページを1本にまとめました（${whole.toFixed(1)} MB ／ ${dpi}dpi・品質${q}）<br>
       面付けはマルチコピー機の<b>小冊子プリント</b>がやります。このまま持って行ってください。</p>`;
+  }
+  if (padded) {
+    note += `<p class="warn">※ 中綴じは紙1枚＝4ページなので、白ページを${padded}枚<b>裏表紙の手前</b>に
+      入れて${n}ページにしました。台割にも反映してあります。</p>`;
   }
   if (n > MAX_PAGES) {
     note += `<p class="warn">※ ${n}ページあります。マルチコピー機は一度に${MAX_PAGES}ページまでです。</p>`;
