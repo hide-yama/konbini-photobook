@@ -106,7 +106,7 @@ const S = {
   photos: [], pages: [], sel: -1,
   pickPages: false, markedPages: new Set(), lastMark: null,   // 台割の複数選択
   pickPhotos: false, markedPhotos: new Set(),                 // 写真トレイの複数選択
-  prev: [], prevAt: 0,                                        // 見開きプレビュー
+  prev: [], prevAt: 0, prevPages: null,                       // 見開きプレビュー（刷る並び）
   picker: null,                                               // 写真を選ぶ一覧を開いている枠
 };
 const $ = s => document.querySelector(s);
@@ -883,23 +883,31 @@ function autoPlan(mode) {
 
 /** 実際にめくったときの見え方で組にする。
     表紙(1ページ目)と裏表紙(最終ページ)は相手がいないので単独。
-    間は 2|3, 4|5 … と組になる（ページ総数が4の倍数なので必ず割り切れる）。 */
-function bookSpreads() {
-  const n = S.pages.length;
+    間は 2|3, 4|5 … と組になる。
+    **渡す並びは4の倍数であること**（既定の pagesForPrint() は必ずそうなっている）。
+    半端な数を渡すと最後の組が裏表紙を巻き込み、単独の裏表紙と二重に出る。 */
+function bookSpreads(list) {
+  const pages = list || pagesForPrint();
+  const n = pages.length;
   if (!n) return [];
   if (n === 1) return [[0]];
   const out = [[0]];
   for (let i = 1; i < n - 1; i += 2) out.push([i, i + 1]);
-  out.push([n - 1]);
+  if (n % 2 === 0) out.push([n - 1]);   // 奇数なら最後の組に吸収済み
   return out;
 }
 
 function openPreview(at) {
   if (!S.pages.length) { toast('先に写真を読み込んでください'); return; }
-  S.prev = bookSpreads();
+  /* プレビューは「刷ったときの姿」を見せる場所なので、書き出しと同じ並び
+     （4の倍数まで白ページを補ったもの）で組む。台割そのものは変えない。 */
+  S.prevPages = pagesForPrint();
+  S.prev = bookSpreads(S.prevPages);
   S.prevAt = 0;
   if (at != null) {                       // 選択中のページを含む見開きから開く
-    const k = S.prev.findIndex(sp => sp.includes(at));
+    /* 白ページは裏表紙の手前に入るので、ずれるのは裏表紙だけ */
+    const j = at === S.pages.length - 1 ? S.prevPages.length - 1 : at;
+    const k = S.prev.findIndex(sp => sp.includes(j));
     if (k >= 0) S.prevAt = k;
   }
   $('#prev').classList.add('on');
@@ -913,6 +921,7 @@ function closePreview() {
   removeEventListener('keydown', previewKeys);
   removeEventListener('resize', drawPreview);
   $('#prevStage').innerHTML = '';          // 大きなcanvasを持ち続けない
+  S.prevPages = null;
 }
 
 function previewKeys(e) {
@@ -934,7 +943,7 @@ function syncJumpInput() {
 /** ページ番号を入れて、そのページを含む見開きへ飛ぶ。
     範囲外は端に寄せ、空や0のような入力は現在のページに戻す。 */
 function previewJump(v) {
-  const n = S.pages.length;
+  const n = S.prevPages.length;
   let p = Math.round(+v);
   if (!isFinite(p) || !p) { syncJumpInput(); return; }
   p = Math.max(1, Math.min(n, p));
@@ -973,7 +982,7 @@ function drawPreview(keepInput) {
   stage.innerHTML = '';
   for (const it of items) {
     const cv = document.createElement('canvas');
-    drawPage(cv, S.pages[it.i], it.i + 1, scale * dpr);
+    drawPage(cv, S.prevPages[it.i], it.i + 1, scale * dpr);
     cv.style.width = (PW * scale) + 'px';
     cv.style.height = (PH * scale) + 'px';
     stage.appendChild(cv);
@@ -988,9 +997,9 @@ function drawPreview(keepInput) {
   $('#prevBack').disabled = S.prevAt === 0;
   $('#prevNext').disabled = S.prevAt === S.prev.length - 1;
   const inp = $('#prevPage'), tot = $('#prevTotal');
-  if (tot) tot.textContent = S.pages.length;
+  if (tot) tot.textContent = S.prevPages.length;
   if (inp) {
-    inp.max = S.pages.length;
+    inp.max = S.prevPages.length;
     if (!keepInput) inp.value = nums[0];      // ボタンや矢印で動いたときだけ追従させる
   }
 }
@@ -1355,13 +1364,24 @@ function renderCount() {
 /** 4の倍数まであと何ページ足りないか */
 function blanksNeeded(n) { const r = n % 4; return r ? 4 - r : 0; }
 
-/** 不足分を白ページで埋める。入れるのは**裏表紙の手前**。
+/** 書き出したときと同じ並びを返す。不足分の白ページは**裏表紙の手前**に入れる。
     末尾に足すと（＝機械に切り上げさせると）裏表紙が冊子の中ほどに刷られ、
-    物理的な裏表紙が白紙になってしまう。 */
+    物理的な裏表紙が白紙になってしまう。
+    S.pages は書き換えない — プレビューはこれを使い、台割は登録した分だけを見せる。 */
+function pagesForPrint() {
+  const need = blanksNeeded(S.pages.length);
+  if (!need) return S.pages;
+  const out = S.pages.slice();
+  const at = Math.max(0, out.length - 1);
+  for (let i = 0; i < need; i++) out.splice(at, 0, { template: 'blank' });
+  return out;
+}
+
+/** 台割そのものを4の倍数に揃える。書き出しのときだけ呼ぶ。入れた枚数を返す */
 function padBlanks() {
-  const need = blanksNeeded(S.pages.length); if (!need) return 0;
-  const at = Math.max(0, S.pages.length - 1);
-  for (let i = 0; i < need; i++) S.pages.splice(at, 0, { template: 'blank' });
+  const n = S.pages.length, need = blanksNeeded(n); if (!need) return 0;
+  S.pages = pagesForPrint();
+  if (S.sel === n - 1) S.sel += need;           // 裏表紙を選んでいたら追いかける
   if (S.markedPages) S.markedPages.clear();     // 添字がずれる
   renderGrid(); renderIns(); renderCount();
   return need;
