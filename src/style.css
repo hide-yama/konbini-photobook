@@ -89,7 +89,9 @@ h2:not(:first-child){margin-top:20px}
 #insPrev{width:100%;max-height:300px;object-fit:contain;border:1px solid var(--line);
   border-radius:5px;display:block;background:#fafaf9}
 .slot{display:flex;align-items:center;gap:7px;margin-bottom:6px}
-.slot img{width:42px;height:42px;object-fit:cover;border-radius:4px;border:1px solid var(--line);background:#eee}
+/* 正方形に切ると縦長か横長か分からなくなるので、全体を収めて形のまま見せる */
+.slot img{width:42px;height:42px;object-fit:contain;border-radius:4px;
+  border:1px solid var(--line);background:#eceae6}
 .slot select{flex:1;min-width:0}
 .toggle{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);
   border-radius:6px;background:#fafaf9;cursor:pointer}
@@ -313,14 +315,19 @@ body.landscape .sp::after{top:50%;left:6px;right:6px;bottom:auto;width:auto;heig
 .slot .photoBtn{flex:1;min-width:0;display:flex;align-items:center;gap:6px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
 .slot .photoBtn .cv{margin-left:auto;color:var(--dim)}
-.pickGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:5px;
+/* 写真を選び直す小窓。切り抜くと縦長か横長か判別できないので、
+   枠は正方形のまま object-fit:contain で全体を入れ、余った側を地の色で見せる。
+   トレイと同じ 縦/横 の印も添える。 */
+.pickGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:5px;
   margin:0 0 8px;padding:7px;background:#f4f4f2;border:1px solid var(--line);border-radius:7px;
-  max-height:230px;overflow-y:auto}
-.pickGrid figure{margin:0;cursor:pointer;border-radius:4px;overflow:hidden;line-height:0;
-  border:2px solid transparent}
+  max-height:260px;overflow-y:auto}
+.pickGrid figure{margin:0;position:relative;cursor:pointer;border-radius:4px;overflow:hidden;
+  line-height:0;border:2px solid transparent;background:#e6e4e0}
 .pickGrid figure.on{border-color:var(--accent)}
 .pickGrid figure:hover{border-color:var(--dim)}
-.pickGrid img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.pickGrid img{width:100%;aspect-ratio:1;object-fit:contain;display:block}
+.pickGrid .o{position:absolute;left:2px;bottom:2px;background:rgba(0,0,0,.6);color:#fff;
+  font-size:9px;line-height:1.6;padding:0 3px;border-radius:3px}
 .cropRow .rot{font-size:14px;line-height:1;padding:2px 7px}
 .cropRow input[type=range]{flex:1 1 auto;min-width:44px}
 

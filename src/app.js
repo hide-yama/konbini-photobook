@@ -1698,7 +1698,9 @@ function buildIns() {
         ${S.photos.length
           ? S.photos.map((q, qi) => `<figure class="${q.name === cur ? 'on' : ''}"
               onclick="choosePhoto(${s},${qi})" title="${esc(q.name)}">
-              <img src="${q.thumb}" alt=""></figure>`).join('')
+              <img src="${q.thumb}" alt="">
+              <span class="o">${q.orientation === 'portrait' ? '縦' : '横'}</span>
+            </figure>`).join('')
           : '<p class="hint">先に写真を読み込んでください</p>'}
       </div>` : ''}
     ${p ? `<div class="cropRow">

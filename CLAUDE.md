@@ -251,6 +251,10 @@ open photobook.html
 - **ドラッグは Pointer Events で書く。** マウスとタッチを1つの処理で扱える。
   canvas に `touch-action:none` を付けないと、スマホで指の動きがページの
   スクロールに取られる。切り抜ける枠が無いページでは付けない。
+- **写真を選ぶ小窓（`.pickGrid`）は切り抜かない。** 正方形の枠に `object-fit:cover` で
+  敷くと、縦長か横長かが判別できない（ユーザーの指摘）。枠は正方形のまま
+  `object-fit:contain` で全体を入れ、余った側を地の色で見せる。枠の現在の写真
+  （`.slot img` 42px）も同じ。トレイ（`.tray`）は 縦/横 の印があるので cover のまま。
 - **写真を差し替えたら `clearCrop()`。** 別の写真に前の切り抜きが残ると意図しない絵になる。
 - **`cover` と `src_crop` は余分に画素が要る。** `buildPageOps()` の `need` 係数が
   1.9（cover/src_crop）と1.15（contain）に分かれているのはこのため。減らすと
