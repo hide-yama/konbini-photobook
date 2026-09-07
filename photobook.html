@@ -54,7 +54,24 @@ h2:not(:first-child){margin-top:20px}
 .tray .o{position:absolute;left:3px;bottom:3px;background:rgba(0,0,0,.62);color:#fff;
   font-size:9px;padding:1px 4px;border-radius:3px}
 
-#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+/* 台割は「見開きひと組」を1ブロックにして並べる。真ん中が折り目。
+   表紙と裏表紙は相手がいないので、反対側を .slot で空けて左右をそろえる。 */
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px}
+.sp{display:grid;grid-template-columns:1fr 1fr;gap:0;position:relative;
+  padding:6px;border:1px solid var(--line);border-radius:10px;background:#efeeea}
+/* 2枚で1枚の紙に見えるよう、突き合わせる側の角は丸めない */
+.sp>.card:first-child{border-top-right-radius:0;border-bottom-right-radius:0}
+.sp>.card:last-child{border-top-left-radius:0;border-bottom-left-radius:0}
+/* 折り目：継ぎ目に影を落とす */
+.sp::after{content:'';position:absolute;top:6px;bottom:6px;left:50%;width:22px;
+  transform:translateX(-50%);pointer-events:none;
+  background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,.10) 40%,rgba(0,0,0,.17) 50%,
+    rgba(0,0,0,.10) 60%,rgba(0,0,0,0))}
+.slot{border-radius:7px}                     /* 相手のいない側。空けておく */
+/* 4の倍数にするため書き出し時に入る白ページ。まだ台割には無いので点線で予告する */
+.card.ghost{border-style:dashed;background:#fbfaf8;cursor:default}
+.card.ghost canvas.ph{opacity:.45}
+.card.ghost .no{color:var(--dim)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:7px;overflow:hidden;
   cursor:pointer;position:relative}
 .card.sel{border-color:var(--accent);box-shadow:0 0 0 2px rgba(47,111,78,.22)}
@@ -189,6 +206,11 @@ details.info[open] summary{margin-bottom:10px}
   background:var(--accent);z-index:3}
 .card.dropL::before{left:0}
 .card.dropR::after{right:0}
+/* 横ページ（上とじ）は上下にめくるので、目印も横線にする */
+body.landscape .card.dropL::before,body.landscape .card.dropR::after{
+  left:0;right:0;width:auto;height:4px}
+body.landscape .card.dropL::before{top:0;bottom:auto}
+body.landscape .card.dropR::after{top:auto;bottom:0}
 .card[draggable="true"]{cursor:grab}
 .card.drag{cursor:grabbing}
 
@@ -199,7 +221,15 @@ details.info[open] summary{margin-bottom:10px}
 #tray figure.drag{opacity:.35;cursor:grabbing}
 
 /* 横ページ：一覧のカードも横長にする */
-body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+/* 上とじの見開きは上下に積む。折り目も横向きに */
+body.landscape .sp{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
+body.landscape .sp>.card:first-child{border-radius:7px 7px 0 0}
+body.landscape .sp>.card:last-child{border-radius:0 0 7px 7px}
+body.landscape .sp::after{top:50%;left:6px;right:6px;bottom:auto;width:auto;height:22px;
+  transform:translateY(-50%);
+  background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.10) 40%,rgba(0,0,0,.17) 50%,
+    rgba(0,0,0,.10) 60%,rgba(0,0,0,0))}
 /* プレビュー：上とじは上下に積む。折り目の影も横向きに */
 #prev .spread.vert{flex-direction:column}
 #prev .spread.two.vert::after{top:50%;left:0;right:0;bottom:auto;width:auto;height:30px;
@@ -230,8 +260,9 @@ body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
   body[data-tab="ins"]    #center{display:none}
 
   .tray{grid-template-columns:repeat(auto-fill,minmax(88px,1fr))}
-  #grid{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:9px}
-  body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  /* 見開きは1組ずつ縦に積む。表紙だけ1行目、2行目からは左右2カラムになる */
+  #grid{grid-template-columns:1fr;gap:10px}
+  body.landscape #grid{grid-template-columns:1fr}
 
   #tabbar{display:flex;flex:0 0 auto;border-top:1px solid var(--line);background:var(--panel)}
   #tabbar button{flex:1;border:0;border-radius:0;padding:11px 0;font-size:12px;
@@ -1180,7 +1211,7 @@ function setSlotAngle(slot, deg) {
   const pg = S.pages[S.sel]; if (!pg) return;
   setSlotRot(pg, slot, deg);
   const l = $(`#ra${slot}`); if (l) l.textContent = `${normAngle(deg)}°`;
-  const cv = $('#insPrev'); if (cv) drawPage(cv, pg, S.sel + 1, 2.6);
+  const cv = $('#insPrev'); if (cv) drawPage(cv, pg, printNo(S.sel), 2.6);
   clearTimeout(setSlotAngle._t);
   setSlotAngle._t = setTimeout(() => { renderGrid(); drawPreview(); }, 120);
 }
@@ -1189,7 +1220,7 @@ function setZoom(slot, pct) {
   const pg = S.pages[S.sel]; if (!pg) return;
   setCrop(pg, slot, { ...cropOf(pg, slot), z: Math.max(1, pct / 100) });
   const l = $(`#zl${slot}`); if (l) l.textContent = `${pct}%`;
-  const cv = $('#insPrev'); if (cv) drawPage(cv, pg, S.sel + 1, 2.6);
+  const cv = $('#insPrev'); if (cv) drawPage(cv, pg, printNo(S.sel), 2.6);
   clearTimeout(setZoom._t);
   setZoom._t = setTimeout(() => { renderGrid(); drawPreview(); }, 120);
 }
@@ -1310,20 +1341,27 @@ function autoPlan(mode) {
 
 /* ═══════════ 見開きプレビュー ═══════════ */
 
-/** 実際にめくったときの見え方で組にする。
+/** 長さ len の並びを、実際にめくったときの見え方で組にする。
     表紙(1ページ目)と裏表紙(最終ページ)は相手がいないので単独。
     間は 2|3, 4|5 … と組になる。
-    **渡す並びは4の倍数であること**（既定の pagesForPrint() は必ずそうなっている）。
+    **渡す長さは4の倍数であること**（pagesForPrint() / printSeq() は必ずそうなっている）。
     半端な数を渡すと最後の組が裏表紙を巻き込み、単独の裏表紙と二重に出る。 */
-function bookSpreads(list) {
-  const pages = list || pagesForPrint();
-  const n = pages.length;
-  if (!n) return [];
-  if (n === 1) return [[0]];
+function spreadsOf(len) {
+  if (len <= 0) return [];
+  if (len === 1) return [[0]];
   const out = [[0]];
-  for (let i = 1; i < n - 1; i += 2) out.push([i, i + 1]);
-  if (n % 2 === 0) out.push([n - 1]);   // 奇数なら最後の組に吸収済み
+  for (let i = 1; i < len - 1; i += 2) out.push([i, i + 1]);
+  if (len % 2 === 0) out.push([len - 1]);   // 奇数なら最後の組に吸収済み
   return out;
+}
+
+function bookSpreads(list) { return spreadsOf((list || pagesForPrint()).length); }
+
+/** 台割を見開きの組にする。要素は { i, no } で、
+    i は S.pages の添字（-1 は書き出し時に補う白ページ）、no は刷ったときのページ番号。 */
+function gridSpreads() {
+  const seq = printSeq();
+  return spreadsOf(seq.length).map(sp => sp.map(k => ({ i: seq[k], no: k + 1 })));
 }
 
 function openPreview(at) {
@@ -1475,7 +1513,7 @@ function saveBookInfo() {
 function redrawPages() {
   renderGrid();
   const p = $('#insPrev');
-  if (p && S.sel >= 0) drawPage(p, S.pages[S.sel], S.sel + 1, 2.6);
+  if (p && S.sel >= 0) drawPage(p, S.pages[S.sel], printNo(S.sel), 2.6);
   drawPreview();
 }
 
@@ -1525,7 +1563,7 @@ function setColor(field, v, src) {
   clearTimeout(setColor._t);
   setColor._t = setTimeout(() => {
     renderGrid();
-    const p = $('#insPrev'); if (p && S.sel >= 0) drawPage(p, S.pages[S.sel], S.sel + 1, 2.6);
+    const p = $('#insPrev'); if (p && S.sel >= 0) drawPage(p, S.pages[S.sel], printNo(S.sel), 2.6);
     drawPreview();
   }, 150);
 }
@@ -1797,13 +1835,25 @@ function blanksNeeded(n) { const r = n % 4; return r ? 4 - r : 0; }
     末尾に足すと（＝機械に切り上げさせると）裏表紙が冊子の中ほどに刷られ、
     物理的な裏表紙が白紙になってしまう。
     S.pages は書き換えない — プレビューはこれを使い、台割は登録した分だけを見せる。 */
+function printSeq() {
+  const n = S.pages.length, need = blanksNeeded(n);
+  const seq = S.pages.map((_, i) => i);
+  if (!need) return seq;
+  const at = Math.max(1, n - 1);         // 裏表紙の手前。1ページしか無いなら表紙の後ろ
+  for (let i = 0; i < need; i++) seq.splice(at, 0, -1);   // -1 = 補う白ページ
+  return seq;
+}
+
 function pagesForPrint() {
-  const need = blanksNeeded(S.pages.length);
-  if (!need) return S.pages;
-  const out = S.pages.slice();
-  const at = Math.max(0, out.length - 1);
-  for (let i = 0; i < need; i++) out.splice(at, 0, { template: 'blank' });
-  return out;
+  if (!blanksNeeded(S.pages.length)) return S.pages;
+  return printSeq().map(i => (i < 0 ? { template: 'blank' } : S.pages[i]));
+}
+
+/** 台割の添字 i が、刷ったときに何ページ目になるか。
+    白ページは裏表紙の手前に入るので、ずれるのは裏表紙だけ。 */
+function printNo(i) {
+  const n = S.pages.length, need = blanksNeeded(n);
+  return (need && n > 1 && i === n - 1) ? n + need : i + 1;
 }
 
 /** 台割そのものを4の倍数に揃える。書き出しのときだけ呼ぶ。入れた枚数を返す */
@@ -1937,21 +1987,57 @@ function cardAngle(pg) {
   return (t && (t.slots || 0) > 0) ? slotRotation(pg, 0) : pageRotation(pg);
 }
 
+/** 見開きひと組ぶんのHTML。とじ方向に従って、近い側（左／上）を先に置く。
+    相手のいない表紙・裏表紙は、反対側を空けて左右の関係が見えるようにする。 */
+function spreadHtml(cells) {
+  const side = [null, null];                 // [近い側, 後ろ側] = [左/上, 右/下]
+  for (const c of cells) side[isFarPage(c.no) ? 1 : 0] = c;
+  return `<div class="sp">${side.map(c => {
+    if (!c) return '<div class="slot"></div>';       // 表紙・裏表紙の相手のいない側
+    if (c.i < 0) return `
+      <div class="card ghost" title="4の倍数にするため、書き出し時に入る白ページです">
+        <canvas class="ph"></canvas>
+        <div class="meta"><span class="no">${c.no}</span><span class="tn">白ページ（自動）</span></div>
+      </div>`;
+    const pg = S.pages[c.i];
+    return `
+      <div class="card ${c.i === S.sel && !S.pickPages ? 'sel' : ''} ${S.markedPages.has(c.i) ? 'mark' : ''}"
+           draggable="${!S.pickPages}" data-i="${c.i}" data-no="${c.no}">
+        <canvas class="ph"></canvas>
+        <span class="side">${ORIENT_NAME === 'landscape'
+          ? (isFarPage(c.no) ? '下' : '上') : (isFarPage(c.no) ? '右' : '左')}</span>
+        ${cardAngle(pg) ? `<span class="rot">${cardAngle(pg)}°</span>` : ''}
+        ${S.pickPages ? '<span class="chk"></span>' : ''}
+        <div class="meta"><span class="no">${c.no}</span><span class="tn">${esc(pg.template)}</span></div>
+      </div>`;
+  }).join('')}</div>`;
+}
+
 function renderGrid() {
   const g = $('#grid');
   $('#gridEmpty').style.display = S.pages.length ? 'none' : '';
-  g.innerHTML = S.pages.map((pg, i) => `
-    <div class="card ${i === S.sel && !S.pickPages ? 'sel' : ''} ${S.markedPages.has(i) ? 'mark' : ''}"
-         draggable="${!S.pickPages}" data-i="${i}">
-      <canvas class="ph"></canvas>
-      <span class="side">${ORIENT_NAME === 'landscape'
-        ? (isFarPage(i + 1) ? '下' : '上') : (isFarPage(i + 1) ? '右' : '左')}</span>
-      ${cardAngle(pg) ? `<span class="rot">${cardAngle(pg)}°</span>` : ''}
-      ${S.pickPages ? '<span class="chk"></span>' : ''}
-      <div class="meta"><span class="no">${i + 1}</span><span class="tn">${esc(pg.template)}</span></div>
-    </div>`).join('');
-  [...g.children].forEach((c, i) => {
-    drawPage(c.querySelector('canvas'), S.pages[i], i + 1, 1.35);
+  g.innerHTML = gridSpreads().map(spreadHtml).join('');
+
+  /* 補う白ページは絵だけ描く。押しても選べないが、ページの落とし先にはなる */
+  for (const c of g.querySelectorAll('.card.ghost')) {
+    drawPage(c.querySelector('canvas'), { template: 'blank' }, +c.querySelector('.no').textContent, 1.35);
+    c.ondragover = e => {
+      if (DRAG.kind !== 'page') return;
+      e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+      clearDropMarks(); c.classList.add('dropOn');
+      DRAG.to = S.pages.length - 1;          // 裏表紙の手前へ
+    };
+    c.ondrop = e => {
+      if (DRAG.kind !== 'page') return;
+      e.preventDefault(); e.stopPropagation();
+      const { from, to } = DRAG; endDrag();
+      if (movePageTo(from, to)) renderAll();
+    };
+  }
+
+  for (const c of g.querySelectorAll('.card:not(.ghost)')) {
+    const i = +c.dataset.i;
+    drawPage(c.querySelector('canvas'), S.pages[i], +c.dataset.no, 1.35);
     c.onclick = e => {
       if (S.pickPages) { markPage(i, e.shiftKey); return; }
       S.sel = i; renderGrid(); renderIns();
@@ -1969,9 +2055,11 @@ function renderGrid() {
       if (DRAG.kind === 'page') {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
-        /* カードの左半分なら手前、右半分なら後ろに入る */
+        /* カードの左半分なら手前、右半分なら後ろに入る（横ページは上下で見る） */
         const r = c.getBoundingClientRect();
-        const after = e.clientX > r.left + r.width / 2;
+        const after = ORIENT_NAME === 'landscape'
+          ? e.clientY > r.top + r.height / 2
+          : e.clientX > r.left + r.width / 2;
         clearDropMarks();
         c.classList.add(after ? 'dropR' : 'dropL');
         DRAG.to = i + (after ? 1 : 0);
@@ -1990,12 +2078,14 @@ function renderGrid() {
       if (kind === 'page') { if (movePageTo(from, to)) renderAll(); }
       else if (kind === 'photo') assignPhotoToPage(i, photo);
     };
-  });
+  }
 
   /* カードのない余白に落としたら末尾へ */
-  g.ondragover = e => { if (DRAG.kind === 'page' && e.target === g) { e.preventDefault(); clearDropMarks(); } };
+  const blank = e => DRAG.kind === 'page' && (e.target === g || e.target.classList.contains('sp')
+                                              || e.target.classList.contains('slot'));
+  g.ondragover = e => { if (blank(e)) { e.preventDefault(); clearDropMarks(); } };
   g.ondrop = e => {
-    if (DRAG.kind !== 'page' || e.target !== g) return;
+    if (!blank(e)) return;
     e.preventDefault(); e.stopPropagation();
     const from = DRAG.from;
     endDrag();
@@ -2089,9 +2179,9 @@ function buildIns() {
   el.innerHTML = `
     ${pg.flip ? `<p class="hint">プレビューは<b>めくったときに見える向き</b>で表示しています。
       紙には上下逆に刷られ、本を裏返すと表紙と天地が揃います（横ページの裏表紙）。</p>` : ''}
-    <h2>${i + 1}ページ目（${ORIENT_NAME === 'landscape'
-        ? (isFarPage(i + 1) ? '下ページ' : '上ページ')
-        : (isFarPage(i + 1) ? '右ページ' : '左ページ')}）</h2>
+    <h2>${printNo(i)}ページ目（${ORIENT_NAME === 'landscape'
+        ? (isFarPage(printNo(i)) ? '下ページ' : '上ページ')
+        : (isFarPage(printNo(i)) ? '右ページ' : '左ページ')}）</h2>
     <canvas id="insPrev"></canvas>
     ${hasCropFrame(pg, t) ? `<p class="hint">プレビューを<b>ドラッグすると切り抜き位置</b>を動かせます。</p>` : ''}
     <div class="field" style="margin-top:12px">
@@ -2145,12 +2235,12 @@ function buildIns() {
 function touch(all) {
   if (all) { renderGrid(); } else {
     const c = $(`.card[data-i="${S.sel}"] canvas`);
-    if (c) drawPage(c, S.pages[S.sel], S.sel + 1, 1.35);
+    if (c) drawPage(c, S.pages[S.sel], printNo(S.sel), 1.35);
     const m = $(`.card[data-i="${S.sel}"] .tn`); if (m) m.textContent = S.pages[S.sel].template;
     const r = $(`.card[data-i="${S.sel}"] .rot`);
     if (!!cardAngle(S.pages[S.sel]) !== !!r) renderGrid();
   }
-  const p = $('#insPrev'); if (p && S.sel >= 0) drawPage(p, S.pages[S.sel], S.sel + 1, 2.6);
+  const p = $('#insPrev'); if (p && S.sel >= 0) drawPage(p, S.pages[S.sel], printNo(S.sel), 2.6);
   renderCount();
 }
 
