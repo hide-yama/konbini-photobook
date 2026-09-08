@@ -12,6 +12,9 @@
   <h1>写真集エディタ</h1>
   <button id="pickBtn" onclick="togglePickPages()" disabled
     title="複数のページを選んで、まとめて削除・複製します">選択</button>
+  <!-- 選択中だけ出す。編集タブへ移らないと消せないのは操作として遠いため -->
+  <button id="delPagesBtn" class="danger" onclick="delMarkedPages()"
+    style="display:none" title="選んだページを削除します">削除</button>
   <button id="prevBtn" onclick="openPreview()" disabled
     title="全画面で、実際にめくったときの見開きを確認します">プレビュー</button>
   <div class="settings">

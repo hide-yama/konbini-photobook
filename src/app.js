@@ -1262,12 +1262,12 @@ function markPage(i, range) {
 
 function markAllPages() {
   S.pages.forEach((_, i) => S.markedPages.add(i));
-  renderGrid(); renderIns();
+  renderGrid(); renderIns(); renderCount();     // ヘッダーの削除ボタンも数え直す
 }
 
 function clearMarkedPages() {
   S.markedPages.clear(); S.lastMark = null;
-  renderGrid(); renderIns();
+  renderGrid(); renderIns(); renderCount();
 }
 
 /* 一括操作を1回やったら選択モードを抜ける。
@@ -1352,6 +1352,15 @@ function renderCount() {
     pick.textContent = S.pickPages ? '完了' : '選択';
     pick.classList.toggle('on', S.pickPages);
     pick.disabled = !n;
+  }
+  /* 削除は選択中だけ「完了」の隣に出す。狭い画面で編集タブへ移らないと
+     消せないのは操作として遠い（ユーザーの指摘）。 */
+  const del = $('#delPagesBtn');
+  if (del) {
+    const k = S.markedPages.size;
+    del.style.display = S.pickPages ? '' : 'none';
+    del.textContent = k ? `削除（${k}）` : '削除';
+    del.disabled = !k;
   }
   if (!n) { el.textContent = '0ページ'; el.className = 'bad'; btn.disabled = true; return; }
   if (need) {
@@ -1556,6 +1565,7 @@ function spreadHtml(cells) {
 function renderGrid() {
   const g = $('#grid');
   $('#gridEmpty').style.display = S.pages.length ? 'none' : '';
+  g.classList.toggle('picking', S.pickPages);   // 角度の印がチェック丸と重ならないように
   g.innerHTML = gridSpreads().map(spreadHtml).join('');
 
   /* 補う白ページは絵だけ描く。押しても選べないが、ページの落とし先にはなる */

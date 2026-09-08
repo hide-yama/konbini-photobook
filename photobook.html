@@ -83,6 +83,8 @@ h2:not(:first-child){margin-top:20px}
 .card .tn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .card .rot{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.66);color:#fff;
   border-radius:4px;font-size:10px;padding:1px 5px}
+/* 選択中はチェック丸が右上に出るので、角度の印はその左へ寄せる */
+#grid.picking .card .rot{right:29px}
 .side{position:absolute;top:5px;left:5px;font-size:9px;color:#fff;background:rgba(0,0,0,.4);
   padding:1px 4px;border-radius:3px}
 
@@ -346,6 +348,9 @@ body.landscape .sp::after{top:50%;left:6px;right:6px;bottom:auto;width:auto;heig
   <h1>写真集エディタ</h1>
   <button id="pickBtn" onclick="togglePickPages()" disabled
     title="複数のページを選んで、まとめて削除・複製します">選択</button>
+  <!-- 選択中だけ出す。編集タブへ移らないと消せないのは操作として遠いため -->
+  <button id="delPagesBtn" class="danger" onclick="delMarkedPages()"
+    style="display:none" title="選んだページを削除します">削除</button>
   <button id="prevBtn" onclick="openPreview()" disabled
     title="全画面で、実際にめくったときの見開きを確認します">プレビュー</button>
   <div class="settings">
@@ -1729,12 +1734,12 @@ function markPage(i, range) {
 
 function markAllPages() {
   S.pages.forEach((_, i) => S.markedPages.add(i));
-  renderGrid(); renderIns();
+  renderGrid(); renderIns(); renderCount();     // ヘッダーの削除ボタンも数え直す
 }
 
 function clearMarkedPages() {
   S.markedPages.clear(); S.lastMark = null;
-  renderGrid(); renderIns();
+  renderGrid(); renderIns(); renderCount();
 }
 
 /* 一括操作を1回やったら選択モードを抜ける。
@@ -1819,6 +1824,15 @@ function renderCount() {
     pick.textContent = S.pickPages ? '完了' : '選択';
     pick.classList.toggle('on', S.pickPages);
     pick.disabled = !n;
+  }
+  /* 削除は選択中だけ「完了」の隣に出す。狭い画面で編集タブへ移らないと
+     消せないのは操作として遠い（ユーザーの指摘）。 */
+  const del = $('#delPagesBtn');
+  if (del) {
+    const k = S.markedPages.size;
+    del.style.display = S.pickPages ? '' : 'none';
+    del.textContent = k ? `削除（${k}）` : '削除';
+    del.disabled = !k;
   }
   if (!n) { el.textContent = '0ページ'; el.className = 'bad'; btn.disabled = true; return; }
   if (need) {
@@ -2023,6 +2037,7 @@ function spreadHtml(cells) {
 function renderGrid() {
   const g = $('#grid');
   $('#gridEmpty').style.display = S.pages.length ? 'none' : '';
+  g.classList.toggle('picking', S.pickPages);   // 角度の印がチェック丸と重ならないように
   g.innerHTML = gridSpreads().map(spreadHtml).join('');
 
   /* 補う白ページは絵だけ描く。押しても選べないが、ページの落とし先にはなる */
