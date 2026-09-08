@@ -31,8 +31,12 @@
   </div>
   <span id="progress" style="display:none"></span>
   <span class="spacer"></span>
-  <span id="count">—</span>
-  <button class="primary" id="buildBtn" onclick="exportPDF()" disabled>PDFを作る</button>
+  <!-- ページ数と「PDFを作る」はひと組。狭い画面では #bottomBar へ丸ごと引っ越す
+       （placeMainAction）。親指の届く下端に置きたいため。 -->
+  <div id="mainAction">
+    <span id="count">—</span>
+    <button class="primary" id="buildBtn" onclick="exportPDF()" disabled>PDFを作る</button>
+  </div>
 </header>
 
 <main>
@@ -61,6 +65,8 @@
     <div class="empty">読み込み中…</div>
   </div>
 </main>
+
+<div id="bottomBar"></div>
 
 <nav id="tabbar">
   <button data-tab="photos" onclick="setTab('photos')">写真</button>

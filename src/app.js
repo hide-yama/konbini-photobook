@@ -100,6 +100,8 @@ function syncControls() {
   setTab(document.body.dataset.tab || 'grid');
   const p = $('#book'); if (p) p.value = BOOK_NAME;
   const or = $('#orient'); if (or) or.value = ORIENT_NAME;
+  placeMainAction();
+  addEventListener('resize', placeMainAction);
 }
 
 const S = {
@@ -1333,6 +1335,14 @@ function delMarkedPhotos() {
    タブバーが出ているかどうかで判定する。 */
 const NARROW = () => { const b = $('#tabbar'); return !!b && getComputedStyle(b).display !== 'none'; };
 
+/** ページ数と「PDFを作る」を、広い画面ではヘッダー末尾へ、狭い画面では下端のバーへ移す。
+    CSSだけでは親を跨げないのでDOMごと動かす。狭いかどうかの判定は NARROW()＝CSS任せ。 */
+function placeMainAction() {
+  const act = $('#mainAction'); if (!act) return;
+  const to = NARROW() ? $('#bottomBar') : $('body > header');
+  if (to && act.parentElement !== to) to.appendChild(act);
+}
+
 function setTab(name) {
   document.body.dataset.tab = name;
   $$('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
@@ -1542,7 +1552,7 @@ function spreadHtml(cells) {
   const side = [null, null];                 // [近い側, 後ろ側] = [左/上, 右/下]
   for (const c of cells) side[isFarPage(c.no) ? 1 : 0] = c;
   return `<div class="sp">${side.map(c => {
-    if (!c) return '<div class="slot"></div>';       // 表紙・裏表紙の相手のいない側
+    if (!c) return '<div class="blankSide"></div>';  // 表紙・裏表紙の相手のいない側
     if (c.i < 0) return `
       <div class="card ghost" title="4の倍数にするため、書き出し時に入る白ページです">
         <canvas class="ph"></canvas>
@@ -1632,7 +1642,7 @@ function renderGrid() {
 
   /* カードのない余白に落としたら末尾へ */
   const blank = e => DRAG.kind === 'page' && (e.target === g || e.target.classList.contains('sp')
-                                              || e.target.classList.contains('slot'));
+                                              || e.target.classList.contains('blankSide'));
   g.ondragover = e => { if (blank(e)) { e.preventDefault(); clearDropMarks(); } };
   g.ondrop = e => {
     if (!blank(e)) return;
@@ -1657,7 +1667,7 @@ function buildIns() {
   if (S.pickPages) {
     const k = S.markedPages.size;
     el.innerHTML = `
-      <h2>選択モード</h2>
+      <h2 class="paneTitle">選択モード</h2>
       <p class="pickState">${k ? `<b>${k}</b> ページを選択中` : 'ページをクリックして選びます'}</p>
       <p class="hint">Shift＋クリックで範囲選択。<br>
         もう一度ヘッダーの「完了」を押すと解除します。</p>
@@ -1731,7 +1741,7 @@ function buildIns() {
   el.innerHTML = `
     ${pg.flip ? `<p class="hint">プレビューは<b>めくったときに見える向き</b>で表示しています。
       紙には上下逆に刷られ、本を裏返すと表紙と天地が揃います（横ページの裏表紙）。</p>` : ''}
-    <h2>${printNo(i)}ページ目（${ORIENT_NAME === 'landscape'
+    <h2 class="paneTitle">${printNo(i)}ページ目（${ORIENT_NAME === 'landscape'
         ? (isFarPage(printNo(i)) ? '下ページ' : '上ページ')
         : (isFarPage(printNo(i)) ? '右ページ' : '左ページ')}）</h2>
     <canvas id="insPrev"></canvas>

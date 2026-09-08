@@ -4,61 +4,119 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>写真集エディタ — コンビニ中綴じ</title>
-<style>:root{
-  --bg:#f4f4f3; --panel:#fff; --line:#e0e0de; --ink:#22221f; --dim:#83837c;
-  --accent:#2f6f4e; --warn:#a8641b; --warnbg:#fdf4e6; --okbg:#eef5f0;
+<style>/* ═══════════ 見た目の土台 ═══════════
+   数値はここで決めた段階だけを使う。バラバラの px を書き足さないこと。
+   ・文字   11 / 12 / 13 / 14 / 16
+   ・間隔   4の倍数
+   ・角丸   --r1 6 / --r2 10 / --r3 16 / 丸
+   ・影     --sh1（浮いている）/ --sh2（手前にある）だけ
+   ・当たり判定 --tap 34 / --tapL 40（狭い画面は 44 / 46）
+   地は白ではなく温かい紙色にしてある。写真が主役なので、色は紙＋緑1色に絞る。 */
+:root{
+  /* 面 */
+  --bg:#f0ece4; --panel:#fff; --sunk:#f8f6f1;
+  --line:#e5e0d5; --line2:#d5cec0;
+  /* 文字 */
+  --ink:#211f1a; --dim:#847d70;
+  /* 主色 */
+  --accent:#1c6d4b; --accentHi:#22815a; --accentLo:#155239; --accentSoft:#e6f0ea;
+  /* 状態 */
+  --warn:#9c5c14; --warnbg:#fbf1df; --okbg:#e9f1ec;
+  --danger:#a03a33; --dangerLine:#e0c2bf; --dangerBg:#fbefee;
+  /* 押した時の面（沈み込みは入れない。色だけ変える） */
+  --press:#eceae4;
+  /* 影・角丸・当たり判定 */
+  --sh1:0 1px 2px rgba(56,45,25,.07);
+  --sh2:0 3px 10px rgba(56,45,25,.11), 0 1px 3px rgba(56,45,25,.06);
+  --r1:6px; --r2:10px; --r3:16px;
+  --tap:34px; --tapL:40px;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;font:13px/1.6 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
-  background:var(--bg);color:var(--ink);overflow:hidden;display:flex;flex-direction:column}
-button{font:inherit;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);
-  border-radius:6px;padding:5px 11px}
-button:hover:not(:disabled){background:#f0f0ee}
-button:disabled{opacity:.4;cursor:not-allowed}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
-button.primary:hover:not(:disabled){background:#255a3f}
-select,textarea,input[type=text],input[type=number]{font:inherit;padding:5px 8px;border:1px solid var(--line);
-  border-radius:6px;background:#fff;color:var(--ink)}
-.row{display:flex;align-items:center;gap:8px}
-h3{font-size:12px;margin:14px 0 7px;color:var(--dim);letter-spacing:.04em}
+body{margin:0;font:14px/1.65 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  background:var(--bg);color:var(--ink);overflow:hidden;display:flex;flex-direction:column;
+  -webkit-font-smoothing:antialiased}
 
-header{display:flex;align-items:center;gap:7px;padding:9px 12px;background:var(--panel);
+/* ── ボタン ──
+   3段だけ：主（塗り）／副（白い面）／小（tiny）。
+   押した感じは背景色が変わるだけにする（動かさない）。 */
+button{font:inherit;font-weight:500;cursor:pointer;color:var(--ink);background:var(--panel);
+  border:1px solid var(--line2);border-radius:var(--r2);
+  min-height:var(--tap);padding:0 14px;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  box-shadow:var(--sh1);transition:background .12s,border-color .12s,color .12s}
+button:hover:not(:disabled){background:var(--sunk)}
+button:active:not(:disabled){background:var(--press)}
+button:disabled{opacity:.42;cursor:not-allowed;box-shadow:none}
+button.primary{min-height:var(--tapL);padding:0 18px;font-weight:700;
+  background:var(--accent);border-color:var(--accent);color:#fff;
+  box-shadow:0 2px 6px rgba(28,109,75,.26)}
+button.primary:hover:not(:disabled){background:var(--accentHi);border-color:var(--accentHi)}
+button.primary:active:not(:disabled){background:var(--accentLo);border-color:var(--accentLo)}
+button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button.on:hover:not(:disabled){background:var(--accentHi);border-color:var(--accentHi)}
+button.on:active:not(:disabled){background:var(--accentLo);border-color:var(--accentLo)}
+button.danger{border-color:var(--dangerLine);color:var(--danger)}
+button.danger:hover:not(:disabled){background:var(--dangerBg)}
+button.danger:active:not(:disabled){background:#f6e3e1}
+button.tiny{min-height:28px;padding:0 9px;font-size:12px;border-radius:var(--r1);box-shadow:none}
+
+select,textarea,input[type=text],input[type=number]{font:inherit;padding:6px 10px;
+  min-height:var(--tap);border:1px solid var(--line2);border-radius:var(--r2);
+  background:var(--panel);color:var(--ink)}
+select{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input[type=range]{accent-color:var(--accent)}
+input[type=checkbox],input[type=radio]{accent-color:var(--accent);width:17px;height:17px}
+
+.row{display:flex;align-items:center;gap:8px}
+h3{font-size:12px;margin:16px 0 8px;color:var(--dim);letter-spacing:.04em}
+
+header{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--panel);
   border-bottom:1px solid var(--line);flex-wrap:wrap;flex:0 0 auto}
+body>header{border-bottom:0;box-shadow:var(--sh1);z-index:5}
 header button,header select{white-space:nowrap;flex:0 0 auto}
-header h1{font-size:14px;margin:0 8px 0 0;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+header h1{font-size:15px;margin:0 8px 0 0;font-weight:700;letter-spacing:.02em;white-space:nowrap}
 .spacer{flex:1}
-#count{font-weight:600;padding:4px 12px;border-radius:20px;background:var(--okbg);white-space:nowrap}
+/* ページ数の表示と「PDFを作る」はひと組。狭い画面では下のバーへ丸ごと引っ越す */
+#mainAction{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+#count{font-weight:600;font-size:13px;padding:6px 14px;border-radius:999px;
+  background:var(--okbg);color:var(--accentLo);white-space:nowrap}
 #count.bad{background:var(--warnbg);color:var(--warn)}
 /* 書き出し時に白ページを補う予告。エラーではないので枠線だけ控えめに */
-#count.warn{background:transparent;color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn);font-weight:500}
+#count.warn{background:transparent;color:var(--warn);box-shadow:inset 0 0 0 1px var(--line2);
+  font-weight:500}
 #progress{font-size:12px;color:var(--dim);white-space:nowrap}
-.mini{font-size:11px;color:var(--dim)}
+.mini{font-size:12px;color:var(--dim)}
 
-main{display:grid;grid-template-columns:206px 1fr 288px;flex:1 1 auto;min-height:0}
-.pane{overflow-y:auto;padding:12px}
+main{display:grid;grid-template-columns:220px 1fr 304px;flex:1 1 auto;min-height:0}
+.pane{overflow-y:auto;padding:16px}
 .pane.left{border-right:1px solid var(--line);background:var(--panel)}
 .pane.right{border-left:1px solid var(--line);background:var(--panel);padding-bottom:40px}
 h2{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--dim);
   margin:0 0 10px;font-weight:700}
-h2:not(:first-child){margin-top:20px}
+h2:not(:first-child){margin-top:24px}
+/* ペインの見出し。下の小さなラベル群（h2）より一段上に置く */
+h2.paneTitle{font-size:15px;text-transform:none;letter-spacing:0;color:var(--ink);
+  margin-bottom:12px}
 
-.drop{border:2px dashed var(--line);border-radius:8px;padding:22px 10px;text-align:center;
-  color:var(--dim);cursor:pointer;line-height:1.7;font-size:12px}
-.drop:hover,.drop.hot{border-color:var(--accent);color:var(--accent);background:var(--okbg)}
-.tray{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
-.tray figure{margin:0;position:relative;cursor:pointer;border-radius:4px;overflow:hidden;
-  border:1px solid var(--line);aspect-ratio:1;background:#eee}
+.drop{border:2px dashed var(--line2);border-radius:var(--r2);padding:22px 10px;text-align:center;
+  color:var(--dim);cursor:pointer;line-height:1.7;font-size:13px;
+  transition:border-color .12s,background .12s,color .12s}
+.drop:hover,.drop.hot{border-color:var(--accent);color:var(--accent);background:var(--accentSoft)}
+.tray{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.tray figure{margin:0;position:relative;cursor:pointer;border-radius:var(--r1);overflow:hidden;
+  border:1px solid var(--line);aspect-ratio:1;background:#eae7e0;box-shadow:var(--sh1)}
 .tray img{width:100%;height:100%;object-fit:cover;display:block}
 .tray figure:hover{outline:2px solid var(--accent);outline-offset:1px}
-.tray .o{position:absolute;left:3px;bottom:3px;background:rgba(0,0,0,.62);color:#fff;
-  font-size:9px;padding:1px 4px;border-radius:3px}
+.tray .o{position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.62);color:#fff;
+  font-size:9.5px;padding:1px 5px;border-radius:var(--r1)}
 
 /* 台割は「見開きひと組」を1ブロックにして並べる。真ん中が折り目。
    表紙と裏表紙は相手がいないので、反対側を .slot で空けて左右をそろえる。 */
-#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:16px}
 .sp{display:grid;grid-template-columns:1fr 1fr;gap:0;position:relative;
-  padding:6px;border:1px solid var(--line);border-radius:10px;background:#efeeea}
+  padding:6px;border:1px solid var(--line);border-radius:12px;background:#e9e5dc}
 /* 2枚で1枚の紙に見えるよう、突き合わせる側の角は丸めない */
 .sp>.card:first-child{border-top-right-radius:0;border-bottom-right-radius:0}
 .sp>.card:last-child{border-top-left-radius:0;border-bottom-left-radius:0}
@@ -67,109 +125,111 @@ h2:not(:first-child){margin-top:20px}
   transform:translateX(-50%);pointer-events:none;
   background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,.10) 40%,rgba(0,0,0,.17) 50%,
     rgba(0,0,0,.10) 60%,rgba(0,0,0,0))}
-.slot{border-radius:7px}                     /* 相手のいない側。空けておく */
+/* 表紙・裏表紙の、相手のいない側。空けておくだけ。
+   右ペインの写真枠も .slot なので、名前を分けてある（当たってはいけない） */
+.blankSide{border-radius:var(--r1)}
 /* 4の倍数にするため書き出し時に入る白ページ。まだ台割には無いので点線で予告する */
-.card.ghost{border-style:dashed;background:#fbfaf8;cursor:default}
+.card.ghost{border-style:dashed;background:var(--sunk);cursor:default;box-shadow:none}
 .card.ghost canvas.ph{opacity:.45}
 .card.ghost .no{color:var(--dim)}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:7px;overflow:hidden;
-  cursor:pointer;position:relative}
-.card.sel{border-color:var(--accent);box-shadow:0 0 0 2px rgba(47,111,78,.22)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r1);overflow:hidden;
+  cursor:pointer;position:relative;box-shadow:var(--sh1);
+  transition:border-color .12s,box-shadow .12s}
+.card:hover{box-shadow:var(--sh2)}
+.card.sel{border-color:var(--accent);box-shadow:0 0 0 2px rgba(28,109,75,.24)}
 .card.drag{opacity:.35}
-.card canvas.ph{display:block;width:100%;height:auto;background:#fafaf9}
-.card .meta{padding:4px 7px;border-top:1px solid var(--line);display:flex;
-  justify-content:space-between;gap:6px;font-size:10.5px;color:var(--dim)}
+.card canvas.ph{display:block;width:100%;height:auto;background:#fbfaf8}
+.card .meta{padding:5px 8px;border-top:1px solid var(--line);display:flex;
+  justify-content:space-between;gap:6px;font-size:11px;color:var(--dim)}
 .card .no{font-weight:700;color:var(--ink)}
 .card .tn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.card .rot{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.66);color:#fff;
-  border-radius:4px;font-size:10px;padding:1px 5px}
+.card .rot{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.66);color:#fff;
+  border-radius:var(--r1);font-size:10.5px;padding:1px 5px}
 /* 選択中はチェック丸が右上に出るので、角度の印はその左へ寄せる */
-#grid.picking .card .rot{right:29px}
-.side{position:absolute;top:5px;left:5px;font-size:9px;color:#fff;background:rgba(0,0,0,.4);
-  padding:1px 4px;border-radius:3px}
+#grid.picking .card .rot{right:30px}
+.side{position:absolute;top:6px;left:6px;font-size:9.5px;color:#fff;background:rgba(0,0,0,.42);
+  padding:1px 5px;border-radius:var(--r1)}
 
-.field{margin-bottom:12px}
-.field label{display:block;font-size:11px;color:var(--dim);margin-bottom:4px;font-weight:600}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--dim);margin-bottom:5px;font-weight:600}
 .field select,.field input,.field textarea{width:100%}
 /* チェックボックス等まで幅100%にすると、ラベルが次の行へ落ちる */
 .field input[type=checkbox],.field input[type=color],.field input[type=radio]{width:auto}
-.field textarea{resize:vertical;line-height:1.5;min-height:52px}
+.field textarea{resize:vertical;line-height:1.55;min-height:56px}
 #insPrev{width:100%;max-height:300px;object-fit:contain;border:1px solid var(--line);
-  border-radius:5px;display:block;background:#fafaf9}
-.slot{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+  border-radius:var(--r1);display:block;background:#fbfaf8;box-shadow:var(--sh1)}
+.slot{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 /* 正方形に切ると縦長か横長か分からなくなるので、全体を収めて形のまま見せる */
-.slot img{width:42px;height:42px;object-fit:contain;border-radius:4px;
-  border:1px solid var(--line);background:#eceae6}
+.slot img{width:44px;height:44px;object-fit:contain;border-radius:var(--r1);
+  border:1px solid var(--line);background:#eceae4}
 .slot select{flex:1;min-width:0}
-.toggle{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);
-  border-radius:6px;background:#fafaf9;cursor:pointer}
+.toggle{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);
+  border-radius:var(--r2);background:var(--sunk);cursor:pointer;min-height:var(--tap)}
 .toggle input{margin:0}
-.hint{font-size:11px;color:var(--dim);line-height:1.55;margin:7px 0 0}
-.empty{color:var(--dim);text-align:center;padding:44px 18px;line-height:1.8;font-size:12px}
+.hint{font-size:12px;color:var(--dim);line-height:1.6;margin:8px 0 0}
+.empty{color:var(--dim);text-align:center;padding:44px 18px;line-height:1.8;font-size:13px}
 
-#modal,#bookModal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;
+#modal,#bookModal{position:fixed;inset:0;background:rgba(30,24,14,.46);display:none;
   align-items:center;justify-content:center;z-index:50}
 #modal.on,#bookModal.on{display:flex}
-.sheet{background:var(--panel);border-radius:10px;width:min(700px,93vw);max-height:88vh;
-  display:flex;flex-direction:column;overflow:hidden}
+.sheet{background:var(--panel);border-radius:var(--r3);width:min(700px,93vw);max-height:88vh;
+  display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(30,24,14,.32)}
 .sheet .body{padding:16px;overflow-y:auto}
-pre{background:#22221f;color:#e8e8e2;padding:12px;border-radius:6px;font-size:11px;
-  max-height:190px;overflow:auto;white-space:pre-wrap;margin:10px 0 0;line-height:1.5}
-.dl{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;
-  border:1px solid var(--line);border-radius:6px;margin-bottom:6px;gap:10px}
-.dl a{color:var(--accent);font-weight:600;text-decoration:none;white-space:nowrap}
+pre{background:#26241e;color:#e9e6dd;padding:12px;border-radius:var(--r2);font-size:12px;
+  max-height:190px;overflow:auto;white-space:pre-wrap;margin:12px 0 0;line-height:1.5}
+.dl{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;
+  border:1px solid var(--line);border-radius:var(--r2);margin-bottom:8px;gap:10px;
+  background:var(--sunk)}
+.dl a{color:var(--accent);font-weight:700;text-decoration:none;white-space:nowrap}
 .dl a:hover{text-decoration:underline}
 .dl .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dl .n em{font-style:normal;color:var(--dim);font-size:11px;margin-left:7px}
-.dl .s{color:var(--dim);font-size:11px;white-space:nowrap}
-.ok{background:var(--okbg);padding:9px 12px;border-radius:6px;margin:0 0 12px}
-.warn{background:var(--warnbg);color:var(--warn);padding:9px 12px;border-radius:6px;margin:0 0 12px}
-details{margin-top:10px}
-summary{cursor:pointer;color:var(--dim);font-size:12px;margin-bottom:7px}
+.dl .n em{font-style:normal;color:var(--dim);font-size:12px;margin-left:8px}
+.dl .s{color:var(--dim);font-size:12px;white-space:nowrap}
+.ok{background:var(--okbg);padding:10px 14px;border-radius:var(--r2);margin:0 0 12px}
+.warn{background:var(--warnbg);color:var(--warn);padding:10px 14px;border-radius:var(--r2);
+  margin:0 0 12px}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--dim);font-size:12px;margin-bottom:8px}
 
-#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
-  background:#22221f;color:#fff;padding:9px 18px;border-radius:22px;font-size:12.5px;
-  opacity:0;pointer-events:none;transition:.22s;z-index:70}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+  background:#26241e;color:#fff;padding:11px 20px;border-radius:999px;font-size:13px;
+  opacity:0;pointer-events:none;transition:.22s;z-index:70;box-shadow:0 6px 24px rgba(30,24,14,.3)}
 #toast.on{opacity:1;transform:translateX(-50%)}
 
-ol.steps{margin:6px 0 10px;padding-left:22px;line-height:1.85}
+ol.steps{margin:8px 0 12px;padding-left:22px;line-height:1.85}
 ol.steps li{margin:2px 0}
-ol.steps b{background:var(--okbg);padding:1px 5px;border-radius:4px}
+ol.steps b{background:var(--okbg);padding:1px 6px;border-radius:var(--r1)}
 
 /* ── 選択モード ── */
-button.on{background:var(--accent);border-color:var(--accent);color:#fff}
-button.on:hover:not(:disabled){background:#255a3f}
-button.danger{border-color:#d8b4b4;color:#9b3b3b}
-button.danger:hover:not(:disabled){background:#fbf0f0}
-button.tiny{padding:2px 8px;font-size:11px;border-radius:5px}
-
-.paneHead{display:flex;align-items:center;margin-bottom:10px}
+.paneHead{display:flex;align-items:center;margin-bottom:12px}
 .paneHead h2{margin:0}
-.actions{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:10px;
-  padding:7px 8px;background:var(--okbg);border-radius:6px}
+.actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;
+  padding:10px;background:var(--accentSoft);border-radius:var(--r2)}
 .actions .mini{flex:1 0 100%}
-.actions button{padding:3px 9px;font-size:11px;white-space:nowrap;flex:0 0 auto}
+.actions button{min-height:30px;padding:0 10px;font-size:12px;white-space:nowrap;flex:0 0 auto}
 .actions .spacer{display:none}
 
 .card.mark{outline:2px solid var(--accent);outline-offset:-2px}
 #tray figure.mark{outline:2px solid var(--accent);outline-offset:-2px}
-.chk{position:absolute;top:5px;right:5px;width:17px;height:17px;border-radius:50%;
-  background:#fff;border:1.5px solid var(--line);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.chk{position:absolute;top:6px;right:6px;width:19px;height:19px;border-radius:50%;
+  background:#fff;border:1.5px solid var(--line2);box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .card.mark .chk,#tray figure.mark .chk{background:var(--accent);border-color:var(--accent)}
-.card.mark .chk::after,#tray figure.mark .chk::after{content:'';position:absolute;left:4.5px;top:1.5px;
+.card.mark .chk::after,#tray figure.mark .chk::after{content:'';position:absolute;left:5.5px;top:2.5px;
   width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
-.pickState{margin:0;font-size:12px;color:var(--dim)}
-.pickState b{font-size:15px;color:var(--ink)}
+.pickState{margin:0;font-size:13px;color:var(--dim)}
+.pickState b{font-size:16px;color:var(--ink)}
 
 /* ── 見開きプレビュー ── */
-#prev{position:fixed;inset:0;z-index:60;background:#26261f;display:none;flex-direction:column}
+#prev{position:fixed;inset:0;z-index:60;background:#26241e;display:none;flex-direction:column}
 #prev.on{display:flex}
-#prev .bar{display:flex;align-items:center;gap:9px;padding:10px 14px;flex:0 0 auto;
-  background:rgba(0,0,0,.3);color:#f2f2ee;border-bottom:1px solid rgba(255,255,255,.08)}
-#prev .bar b{font-size:13px;letter-spacing:.02em}
-#prev .pos{font-size:12px;color:#b9b9b0}
-#prev .bar button{background:#3b3b34;border-color:#53534a;color:#f2f2ee}
-#prev .bar button:hover:not(:disabled){background:#4a4a42}
+#prev .bar{display:flex;align-items:center;gap:10px;padding:10px 14px;flex:0 0 auto;
+  background:rgba(0,0,0,.3);color:#f2f0ea;border-bottom:1px solid rgba(255,255,255,.08)}
+#prev .bar b{font-size:14px;letter-spacing:.02em}
+#prev .pos{font-size:12px;color:#b8b3a6}
+#prev .bar button,#prev .foot button{background:#3d3a31;border-color:#565246;color:#f2f0ea;
+  box-shadow:none}
+#prev .bar button:hover:not(:disabled),#prev .foot button:hover:not(:disabled){background:#4b4740}
+#prev .bar button:active:not(:disabled),#prev .foot button:active:not(:disabled){background:#33302a}
 #prev .stage{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;
   padding:28px}
 #prev .spread{position:relative;display:flex;background:#fff;
@@ -186,24 +246,24 @@ button.tiny{padding:2px 8px;font-size:11px;border-radius:5px}
   background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.08)}
 #prev .foot .mid{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;
   align-items:center;gap:3px}
-#prev .foot .tip{font-size:11px;color:#8f8f86;text-align:center}
-#prev .jump{display:flex;align-items:center;gap:6px;font-size:11px;color:#b9b9b0}
-#prev .jump input{width:64px;padding:3px 6px;font-size:12px;text-align:center;
-  background:#3b3b34;border:1px solid #53534a;color:#f2f2ee;border-radius:5px}
-#prev .jump .of b{color:#f2f2ee}
-#prev .foot button{flex:0 0 auto;min-width:92px;background:#3b3b34;border-color:#53534a;color:#f2f2ee}
-#prev .foot button:hover:not(:disabled){background:#4a4a42}
+#prev .foot .tip{font-size:11px;color:#8e897d;text-align:center}
+#prev .jump{display:flex;align-items:center;gap:6px;font-size:12px;color:#b8b3a6}
+#prev .jump input{width:66px;padding:4px 6px;min-height:30px;font-size:13px;text-align:center;
+  background:#3d3a31;border:1px solid #565246;color:#f2f0ea;border-radius:var(--r1)}
+#prev .jump .of b{color:#f2f0ea}
+#prev .foot button{flex:0 0 auto;min-width:96px}
 
-details.info{margin-top:20px;border-top:1px solid var(--line);padding-top:12px}
+details.info{margin-top:24px;border-top:1px solid var(--line);padding-top:14px}
 details.info summary{cursor:pointer;font-size:11px;letter-spacing:.06em;color:var(--dim);
   font-weight:700;text-transform:uppercase}
 details.info[open] summary{margin-bottom:10px}
-.hint code{background:#efefec;padding:1px 4px;border-radius:3px;font-size:11px}
+.hint code{background:var(--sunk);border:1px solid var(--line);padding:1px 5px;
+  border-radius:var(--r1);font-size:11.5px}
 
-.rotRow{display:flex;align-items:center;gap:8px;margin:2px 0 8px}
-.rotRow button{font-size:16px;line-height:1;padding:5px 12px}
-.rotRow button.tiny{font-size:11px;padding:3px 9px}
-.rotVal{min-width:44px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums}
+.rotRow{display:flex;align-items:center;gap:8px;margin:2px 0 10px}
+.rotRow button{font-size:17px;line-height:1;padding:0 14px}
+.rotRow button.tiny{font-size:12px;padding:0 10px}
+.rotVal{min-width:46px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums}
 
 /* 並べ替え：どこに入るかを縦線で示す（.card は overflow:hidden なので内側に引く） */
 .card.dropL::before,.card.dropR::after{content:'';position:absolute;top:0;bottom:0;width:4px;
@@ -220,7 +280,7 @@ body.landscape .card.dropR::after{top:auto;bottom:0}
 
 /* トレイからページへ写真を落とす */
 .card.dropOn{outline:3px solid var(--accent);outline-offset:-3px;
-  box-shadow:0 0 0 4px rgba(47,111,78,.18)}
+  box-shadow:0 0 0 4px rgba(28,109,75,.18)}
 #tray figure[draggable="true"]{cursor:grab}
 #tray figure.drag{opacity:.35;cursor:grabbing}
 
@@ -228,8 +288,8 @@ body.landscape .card.dropR::after{top:auto;bottom:0}
 body.landscape #grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
 /* 上とじの見開きは上下に積む。折り目も横向きに */
 body.landscape .sp{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
-body.landscape .sp>.card:first-child{border-radius:7px 7px 0 0}
-body.landscape .sp>.card:last-child{border-radius:0 0 7px 7px}
+body.landscape .sp>.card:first-child{border-radius:var(--r1) var(--r1) 0 0}
+body.landscape .sp>.card:last-child{border-radius:0 0 var(--r1) var(--r1)}
 body.landscape .sp::after{top:50%;left:6px;right:6px;bottom:auto;width:auto;height:22px;
   transform:translateY(-50%);
   background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.10) 40%,rgba(0,0,0,.17) 50%,
@@ -244,17 +304,23 @@ body.landscape .sp::after{top:50%;left:6px;right:6px;bottom:auto;width:auto;heig
 /* ═══ 狭い画面 ═══
    3カラム固定では 390px で中央が24pxに潰れ、右ペインが画面外に出てしまう。
    1カラムにして、下のタブで 写真 / 台割 / 編集 を切り替える。 */
-.settings{display:flex;align-items:center;gap:7px;flex:0 0 auto}
-#tabbar{display:none}
+.settings{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+#tabbar,#bottomBar{display:none}
 
 @media (max-width:820px){
-  header{gap:6px;padding:8px 10px}
+  header{gap:6px;padding:8px 12px}
   header h1{display:none}
   /* 設定はまるごと2行目へ。項目が少ないので横スクロールは不要 */
   .settings{order:10;flex:1 0 100%;flex-wrap:wrap}
-  #count{font-size:12px;padding:4px 9px}
+  /* 触るものは親指で押せる大きさに */
+  button{min-height:40px;padding:0 15px}
+  button.primary{min-height:46px}
+  button.tiny{min-height:32px}
+  .actions button{min-height:34px}
+  select,textarea,input[type=text],input[type=number]{min-height:40px}
 
   main{grid-template-columns:1fr}
+  .pane{padding:14px}
   .pane.left,.pane.right{border:0;padding-bottom:16px}
   body[data-tab="photos"] #center,
   body[data-tab="photos"] .pane.right{display:none}
@@ -265,13 +331,26 @@ body.landscape .sp::after{top:50%;left:6px;right:6px;bottom:auto;width:auto;heig
 
   .tray{grid-template-columns:repeat(auto-fill,minmax(88px,1fr))}
   /* 見開きは1組ずつ縦に積む。表紙だけ1行目、2行目からは左右2カラムになる */
-  #grid{grid-template-columns:1fr;gap:10px}
+  #grid{grid-template-columns:1fr;gap:12px}
   body.landscape #grid{grid-template-columns:1fr}
 
-  #tabbar{display:flex;flex:0 0 auto;border-top:1px solid var(--line);background:var(--panel)}
-  #tabbar button{flex:1;border:0;border-radius:0;padding:11px 0;font-size:12px;
-    color:var(--dim);background:none}
-  #tabbar button.on{color:var(--accent);font-weight:700;
+  /* ページ数と「PDFを作る」は、ヘッダーではなく親指の届く下端に置く。
+     中身の引っ越しは placeMainAction() が担当する（DOMごと移す）。 */
+  #bottomBar{display:flex;align-items:center;gap:10px;flex:0 0 auto;
+    padding:8px 12px;background:var(--panel);border-top:1px solid var(--line);
+    box-shadow:0 -2px 10px rgba(56,45,25,.07)}
+  #bottomBar #mainAction{flex:1 1 auto;min-width:0}
+  /* 予告文は2行になることがある。中途半端に折れないよう均等割りにする */
+  #bottomBar #count{flex:1 1 auto;min-width:0;white-space:normal;font-size:11.5px;
+    line-height:1.4;text-align:center;text-wrap:balance;padding:6px 10px}
+  #bottomBar #buildBtn{flex:0 0 auto}
+
+  #tabbar{display:flex;flex:0 0 auto;border-top:1px solid var(--line);background:var(--panel);
+    padding-bottom:env(safe-area-inset-bottom,0px)}
+  #tabbar button{flex:1;border:0;border-radius:0;min-height:52px;padding:0;font-size:12px;
+    color:var(--dim);background:none;box-shadow:none}
+  #tabbar button:hover:not(:disabled),#tabbar button:active:not(:disabled){background:var(--sunk)}
+  #tabbar button.on{color:var(--accent);font-weight:700;background:none;
     box-shadow:inset 0 -2px 0 var(--accent)}
 
   #prev .bar{gap:6px;padding:8px 10px}
@@ -281,10 +360,11 @@ body.landscape .sp::after{top:50%;left:6px;right:6px;bottom:auto;width:auto;heig
   #prev .foot{gap:8px;padding:9px 10px calc(9px + env(safe-area-inset-bottom,0px))}
   #prev .foot .tip{display:none}
   #prev .foot .mid{flex:0 0 auto}
-  #prev .jump input{width:58px;padding:6px}
-  #prev .foot button{flex:1 1 0;min-width:0;padding:12px 0;font-size:13px}
+  #prev .jump input{width:60px}
+  #prev .foot button{flex:1 1 0;min-width:0;min-height:46px;font-size:14px}
   .sheet{width:100vw;max-height:100vh;border-radius:0}
-  #toast{bottom:64px}
+  /* 下のバー（操作＋タブ）に隠れない高さへ */
+  #toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 }
 
 /* 枠のサムネイルをタップして写真を選ぶ */
@@ -292,51 +372,53 @@ body.landscape .sp::after{top:50%;left:6px;right:6px;bottom:auto;width:auto;heig
 .slot img.pick:hover{outline:2px solid var(--accent);outline-offset:1px}
 
 /* 本の情報：入力欄の下に書体セレクタを並べる */
-.field .fontSel{margin-top:5px;width:100%;font-size:11px;padding:3px 7px}
+.field .fontSel{margin-top:6px;width:100%;font-size:12px;padding:4px 8px;min-height:30px}
 
 /* 本の情報：書体・大きさ・色を1行に */
-.styleRow{display:flex;align-items:center;gap:6px;margin-top:5px}
+.styleRow{display:flex;align-items:center;gap:6px;margin-top:6px}
 .styleRow input[type=color]{flex:0 0 auto}
 .styleRow .hex{flex:1 1 auto;min-width:0}
 .styleRow .fontSel{margin-top:0;flex:1 1 auto;min-width:0}
-.styleRow .u{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--dim)}
-.styleRow input.sz{width:56px;padding:3px 6px;font-size:11px}
-.styleRow input.hex{width:78px;padding:3px 6px;font-size:11px;
+.styleRow .u{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--dim)}
+.styleRow input.sz{width:60px;padding:4px 7px;font-size:12px;min-height:30px}
+.styleRow input.hex{width:84px;padding:4px 7px;font-size:12px;min-height:30px;
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:lowercase}
-.styleRow input[type=color]{width:30px;height:24px;padding:1px;border:1px solid var(--line);
-  border-radius:5px;background:#fff;cursor:pointer}
-.posGrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
-.posGrid button{padding:7px 0;font-size:11px}
+.styleRow input[type=color]{width:32px;height:30px;min-height:0;padding:1px;
+  border:1px solid var(--line2);border-radius:var(--r1);background:#fff;cursor:pointer}
+.posGrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.posGrid button{padding:0;font-size:12px}
 
-.styleRow input.op{flex:1 1 auto;min-width:0;padding:0;height:20px}
-.field .toggle{margin-bottom:6px}
+.styleRow input.op{flex:1 1 auto;min-width:0;min-height:0;padding:0;height:20px}
+.field .toggle{margin-bottom:8px}
 
 /* 切り抜きの調整 */
 #insPrev.cropable{cursor:grab}
 #insPrev.cropable:active{cursor:grabbing}
-.cropRow{display:flex;align-items:center;gap:6px;margin:-2px 0 8px}
+.cropRow{display:flex;align-items:center;gap:8px;margin:0 0 10px}
 .cropRow button,.cropRow .u{white-space:nowrap;flex:0 0 auto}
-.cropRow input[type=range]{flex:1 1 auto;min-width:0;padding:0;height:20px}
-.cropRow .zl{min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
+.cropRow input[type=range]{flex:1 1 auto;min-width:0;padding:0;height:20px;min-height:0}
+.cropRow .zl{min-width:36px;text-align:right;font-variant-numeric:tabular-nums;font-size:12px}
+.cropRow .u{font-size:12px;color:var(--dim)}
 
 /* 写真をサムネイルで選ぶ */
 .slot .photoBtn{flex:1;min-width:0;display:flex;align-items:center;gap:6px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;
+  justify-content:flex-start}
 .slot .photoBtn .cv{margin-left:auto;color:var(--dim)}
 /* 写真を選び直す小窓。切り抜くと縦長か横長か判別できないので、
    枠は正方形のまま object-fit:contain で全体を入れ、余った側を地の色で見せる。
    トレイと同じ 縦/横 の印も添える。 */
-.pickGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:5px;
-  margin:0 0 8px;padding:7px;background:#f4f4f2;border:1px solid var(--line);border-radius:7px;
-  max-height:260px;overflow-y:auto}
-.pickGrid figure{margin:0;position:relative;cursor:pointer;border-radius:4px;overflow:hidden;
-  line-height:0;border:2px solid transparent;background:#e6e4e0}
+.pickGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;
+  margin:0 0 10px;padding:8px;background:var(--sunk);border:1px solid var(--line);
+  border-radius:var(--r2);max-height:260px;overflow-y:auto}
+.pickGrid figure{margin:0;position:relative;cursor:pointer;border-radius:var(--r1);overflow:hidden;
+  line-height:0;border:2px solid transparent;background:#e6e3dc}
 .pickGrid figure.on{border-color:var(--accent)}
 .pickGrid figure:hover{border-color:var(--dim)}
 .pickGrid img{width:100%;aspect-ratio:1;object-fit:contain;display:block}
 .pickGrid .o{position:absolute;left:2px;bottom:2px;background:rgba(0,0,0,.6);color:#fff;
-  font-size:9px;line-height:1.6;padding:0 3px;border-radius:3px}
-.cropRow .rot{font-size:14px;line-height:1;padding:2px 7px}
+  font-size:9.5px;line-height:1.6;padding:0 4px;border-radius:3px}
+.cropRow .rot{font-size:15px;line-height:1;padding:0 9px}
 .cropRow input[type=range]{flex:1 1 auto;min-width:44px}
 
 #bookModal .sheet{width:min(420px,94vw)}
@@ -367,8 +449,12 @@ body.landscape .sp::after{top:50%;left:6px;right:6px;bottom:auto;width:auto;heig
   </div>
   <span id="progress" style="display:none"></span>
   <span class="spacer"></span>
-  <span id="count">—</span>
-  <button class="primary" id="buildBtn" onclick="exportPDF()" disabled>PDFを作る</button>
+  <!-- ページ数と「PDFを作る」はひと組。狭い画面では #bottomBar へ丸ごと引っ越す
+       （placeMainAction）。親指の届く下端に置きたいため。 -->
+  <div id="mainAction">
+    <span id="count">—</span>
+    <button class="primary" id="buildBtn" onclick="exportPDF()" disabled>PDFを作る</button>
+  </div>
 </header>
 
 <main>
@@ -397,6 +483,8 @@ body.landscape .sp::after{top:50%;left:6px;right:6px;bottom:auto;width:auto;heig
     <div class="empty">読み込み中…</div>
   </div>
 </main>
+
+<div id="bottomBar"></div>
 
 <nav id="tabbar">
   <button data-tab="photos" onclick="setTab('photos')">写真</button>
@@ -572,6 +660,8 @@ function syncControls() {
   setTab(document.body.dataset.tab || 'grid');
   const p = $('#book'); if (p) p.value = BOOK_NAME;
   const or = $('#orient'); if (or) or.value = ORIENT_NAME;
+  placeMainAction();
+  addEventListener('resize', placeMainAction);
 }
 
 const S = {
@@ -1805,6 +1895,14 @@ function delMarkedPhotos() {
    タブバーが出ているかどうかで判定する。 */
 const NARROW = () => { const b = $('#tabbar'); return !!b && getComputedStyle(b).display !== 'none'; };
 
+/** ページ数と「PDFを作る」を、広い画面ではヘッダー末尾へ、狭い画面では下端のバーへ移す。
+    CSSだけでは親を跨げないのでDOMごと動かす。狭いかどうかの判定は NARROW()＝CSS任せ。 */
+function placeMainAction() {
+  const act = $('#mainAction'); if (!act) return;
+  const to = NARROW() ? $('#bottomBar') : $('body > header');
+  if (to && act.parentElement !== to) to.appendChild(act);
+}
+
 function setTab(name) {
   document.body.dataset.tab = name;
   $$('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
@@ -2014,7 +2112,7 @@ function spreadHtml(cells) {
   const side = [null, null];                 // [近い側, 後ろ側] = [左/上, 右/下]
   for (const c of cells) side[isFarPage(c.no) ? 1 : 0] = c;
   return `<div class="sp">${side.map(c => {
-    if (!c) return '<div class="slot"></div>';       // 表紙・裏表紙の相手のいない側
+    if (!c) return '<div class="blankSide"></div>';  // 表紙・裏表紙の相手のいない側
     if (c.i < 0) return `
       <div class="card ghost" title="4の倍数にするため、書き出し時に入る白ページです">
         <canvas class="ph"></canvas>
@@ -2104,7 +2202,7 @@ function renderGrid() {
 
   /* カードのない余白に落としたら末尾へ */
   const blank = e => DRAG.kind === 'page' && (e.target === g || e.target.classList.contains('sp')
-                                              || e.target.classList.contains('slot'));
+                                              || e.target.classList.contains('blankSide'));
   g.ondragover = e => { if (blank(e)) { e.preventDefault(); clearDropMarks(); } };
   g.ondrop = e => {
     if (!blank(e)) return;
@@ -2129,7 +2227,7 @@ function buildIns() {
   if (S.pickPages) {
     const k = S.markedPages.size;
     el.innerHTML = `
-      <h2>選択モード</h2>
+      <h2 class="paneTitle">選択モード</h2>
       <p class="pickState">${k ? `<b>${k}</b> ページを選択中` : 'ページをクリックして選びます'}</p>
       <p class="hint">Shift＋クリックで範囲選択。<br>
         もう一度ヘッダーの「完了」を押すと解除します。</p>
@@ -2203,7 +2301,7 @@ function buildIns() {
   el.innerHTML = `
     ${pg.flip ? `<p class="hint">プレビューは<b>めくったときに見える向き</b>で表示しています。
       紙には上下逆に刷られ、本を裏返すと表紙と天地が揃います（横ページの裏表紙）。</p>` : ''}
-    <h2>${printNo(i)}ページ目（${ORIENT_NAME === 'landscape'
+    <h2 class="paneTitle">${printNo(i)}ページ目（${ORIENT_NAME === 'landscape'
         ? (isFarPage(printNo(i)) ? '下ページ' : '上ページ')
         : (isFarPage(printNo(i)) ? '右ページ' : '左ページ')}）</h2>
     <canvas id="insPrev"></canvas>
